@@ -5,7 +5,8 @@ pub enum NumArgs {
     Unlimited,
 }
 
-pub(super) struct Arg {
+
+pub struct Arg {
     long: &'static str,
     short: Option<char>,
     required: bool,
@@ -15,14 +16,13 @@ pub(super) struct Arg {
     repeatable: bool,
 
     // use `extract`
-    //takes_value: bool,
     num_args: NumArgs,
 
     // requires: Vec<Arg|String>
 }
 
 impl Arg {
-    fn new(long: &'static str, help: &'static str) -> Self {
+    pub fn new(long: &'static str, help: &'static str) -> Self { // `from`
         Arg {
             long,
             help,
@@ -54,5 +54,35 @@ impl Arg {
         self.num_args = num;
         self
     }
+
+    pub(super) fn matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+        // check for short
+        match self.short {
+            Some(c) if s.starts_with(&['-',c,'='][..]) => 
+                return ArgMatch::Contained(&s[3..]),
+            Some(c) if s.starts_with(&['-',c][..]) && s.len() == 2 => 
+                return ArgMatch::Match,
+            _ => {},
+        }
+        // check for long
+        if s.starts_with("--") && s[2..].starts_with(self.long) {
+            if s.len() == 2 + self.long.len() {
+                ArgMatch::Match
+            } else if let Some('=') = s.chars().nth(2 + self.long.len()) {
+                ArgMatch::Contained(&s[self.long.len()+3..])
+            } else {
+                ArgMatch::NoMatch
+            }
+        } else {
+            ArgMatch::NoMatch
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ArgMatch<'a> {
+    Match,                  // `-c`, `--long`, etc.
+    NoMatch,                // <not a valid match>
+    Contained(&'a str)      // `-c=XX`, `--long=XX`
 }
 

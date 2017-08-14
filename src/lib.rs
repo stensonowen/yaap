@@ -3,8 +3,8 @@
 use std::str::FromStr;
 use std::env;
 
-mod arg;
-use arg::{NumArgs, };
+pub mod arg;
+pub use arg::{Arg};
 
 /*
  * KEEP IN MIND
@@ -15,18 +15,24 @@ use arg::{NumArgs, };
  *          e.g. `cp` has 2: `src` and `dst`
  *          these are all arguments that don't start with a hyphen
  *           OR are found after a `--`
+ *
+ * uhhh should .contains / .count pop elements??
+ *  should there be 2 copies to maintain?
+ *  if someone ever makes the same call twice it'll silently fail the second time
+ *  there's no reason to do that
+ *  maybe should change name to `pop`?
  */
 
 //struct Yaap(env::Args);
 
 
-struct YaapBuilder {
+pub struct YaapBuilder {
     argv: env::Args,
     name: String,
     auth: Option<&'static str>,
     desc: Option<&'static str>,
     vers: Option<&'static str>,
-    num_anon: NumArgs,
+    //num_anon: NumArgs,
 }
 
 impl YaapBuilder {
@@ -41,7 +47,7 @@ impl YaapBuilder {
             auth: None,
             desc: None,
             vers: None,
-            num_anon: NumArgs::Zero,
+            //num_anon: NumArgs::Zero,
         }
     }
 
@@ -62,7 +68,7 @@ impl YaapBuilder {
         self
     }
 
-    fn build(self) -> Yaap {
+    pub fn build(self) -> Yaap {
         Yaap { 
             argv: self.argv.collect(),
             name: self.name,
@@ -70,14 +76,12 @@ impl YaapBuilder {
             desc: self.desc,
             vers: self.vers,
             help: self.vers,
-            num_anon: self.num_anon,
-            anon_args: None,
         }
     }
 
 }
 
-struct Yaap {
+pub struct Yaap {
     //argv: env::Args,
     argv: Vec<String>,
     name: String,
@@ -86,43 +90,117 @@ struct Yaap {
     vers: Option<&'static str>,
     help: Option<&'static str>,
 
-    num_anon: NumArgs,
-    anon_args: Option<Vec<String>>,     // `Some` means everything's been parsed
+    //num_anon: NumArgs,
+    //anon_args: Option<Vec<String>>,     // `Some` means everything's been parsed
     //errors: Vec<String>, // TODO: error type
 }
 
 impl Yaap { 
-    fn new() -> YaapBuilder {
+
+    // ctors
+
+    pub fn new() -> YaapBuilder {
         YaapBuilder::new()
     }
 
-    fn from(args: env::Args) -> YaapBuilder {
+    pub fn from(args: env::Args) -> YaapBuilder {
         YaapBuilder::from(args)
     }
 
-    /// Locate an argument that takes a value and parse it into `result`
-    fn extract<T: FromStr>(self, result: &mut T, arg: arg::Arg) -> Self {
+    // builders
+
+
+
+    // accessors
+
+    /// Locate a required argument that takes a value and parse it into `result`
+    pub fn extract<T: FromStr>(self, result: &mut T, arg: arg::Arg) -> Self {
+        let mut opt: Option<T> = None;
+        let attempt = self.try_extract(&mut opt, arg);
+        match opt {
+            Some(r) => { *result = r; attempt },
+            None => attempt.msg_usage_quit("")
+        }
+    }
+
+    /// Check for an argument that takes a value and parse it into `result`
+    pub fn try_extract<T: FromStr>(self, result: &mut Option<T>, arg: arg::Arg) -> Self {
+        *result = None;
+        for (i,slice) in self.argv.windows(2).enumerate() {
+            // what is the right syntax for this? has it not landed?
+            let ref this = slice[0];
+            let ref next = slice[1];
+
+            let val = match arg.matches(this) {
+                arg::ArgMatch::NoMatch => continue,
+                arg::ArgMatch::Contained(val) => val,
+                arg::ArgMatch::Match => next,
+            };
+            match val.parse::<T>() {
+                Ok(v) => { *result = Some(v); break },
+                Err(e) => self.msg_usage_quit("wrong type dipshit"),
+            }
+        }
         self
     }
 
     /// Extract all elements that don't start with a hyphen
     // TODO: different collection types?
+    // uhhhhh this needs to be rethought
+    // should it really be a runtime error to call .extract() on an arg
+    //  with numargs set to many? can't verify lengths are correct statically 
     fn extract_all<T: FromStr>(self, result: &mut Vec<T>, arg:arg::Arg) -> Self {
-        self
+        unimplemented!()
     }
 
     /// Determine whether a specific flag is set
     // TODO: return option instead? distinguish between flag absent and negated?
-    fn contains(self, result: &mut bool, arg: arg::Arg) -> Self {
+    pub fn contains(self, result: &mut bool, arg: arg::Arg) -> Self {
+        *result = false;
+        for (i,s) in self.argv.iter().enumerate() {
+            match arg.matches(s) {
+                arg::ArgMatch::NoMatch => continue,
+                arg::ArgMatch::Contained(_) => self.msg_usage_quit("fuck"),
+                arg::ArgMatch::Match => {
+                    // TODO: remove `i`?
+                    *result = true;
+                    break
+                },
+            }
+        }
         self
     }
 
     /// Count the number of occurrences of a flag
     // TODO: be a different type?
-    fn count(self, result: &mut usize, arg: arg::Arg) -> Self {
+    pub fn count(self, result: &mut usize, arg: arg::Arg) -> Self {
+        // TODO remove after counting?
+        let mut count = 0;
+        for (i,s) in self.argv.iter().enumerate() {
+            match arg.matches(s) {
+                arg::ArgMatch::NoMatch => continue,
+                arg::ArgMatch::Contained(_) => self.msg_usage_quit("fuck"),
+                arg::ArgMatch::Match => count += 1,
+            }
+        }
+        *result = count;
         self
     }
 
+
+    // helpers
+
+    fn usage_and_quit(&self) -> ! {
+        unimplemented!()
+    }
+
+    fn msg_usage_quit(&self, msg: &str) -> ! {
+        // ughhhh eprintln is nightly :/
+        println!("{}", msg);
+        self.usage_and_quit()
+    }
+
+    /*
     /// Collects all the anonymous arguments internally for easy access
     fn parse_anonymous_args(mut self) -> Self {
         assert!(self.anon_args.is_none());
@@ -134,7 +212,7 @@ impl Yaap {
         //if let Some("--") = self.argv.last() { self.argv.pop(); }
         self
     }
-
+    */
 
 }
 
