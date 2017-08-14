@@ -4,4 +4,3 @@ version = "0.1.0"
 authors = ["owen <owen@oms.sh>"]
 
 [dependencies]
-typemap = "0.3.3"
