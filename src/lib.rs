@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use std::str::FromStr;
+use std::collections::LinkedList;
 use std::env;
 
 pub mod arg;
@@ -68,9 +69,29 @@ impl YaapBuilder {
         self
     }
 
+    fn get_free_args(argv: &Vec<String>) -> LinkedList<String> {
+        // get all variables that can't be flags
+        // i.e. anything not starting with a `-`
+        //  or anything after the arg `--`
+        let mut free = LinkedList::new();
+        let mut remaining_are_free = false;
+        assert!(argv.len() > 1);
+        for arg in argv.iter().skip(1) {
+            if arg == "--" {
+                remaining_are_free = true;
+            } else if remaining_are_free || arg.starts_with('-') == false {
+                free.push_back(arg.to_owned());
+            } 
+        }
+        free
+    }
+
     pub fn build(self) -> Yaap {
+        let all_args = self.argv.collect();
+        let free_args = Self::get_free_args(&all_args);
         Yaap { 
-            argv: self.argv.collect(),
+            argv: all_args,
+            free: free_args,
             name: self.name,
             auth: self.auth,
             desc: self.desc,
@@ -84,6 +105,7 @@ impl YaapBuilder {
 pub struct Yaap {
     //argv: env::Args,
     argv: Vec<String>,
+    free: LinkedList<String>,
     name: String,
     auth: Option<&'static str>,
     desc: Option<&'static str>,
@@ -94,6 +116,8 @@ pub struct Yaap {
     //anon_args: Option<Vec<String>>,     // `Some` means everything's been parsed
     //errors: Vec<String>, // TODO: error type
 }
+
+use arg::{FlagArg, ValArg, ListArg};
 
 impl Yaap { 
 
@@ -110,13 +134,32 @@ impl Yaap {
     // builders
 
 
+    // safer accessors 
+
+
+    pub fn contains(self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
+        unimplemented!()
+    }
+
+    pub fn extract_val<T>(self, result: &mut T, arg: Arg<ValArg>) -> Self 
+        where T: FromStr
+    {
+        unimplemented!()
+    }
+
+    pub fn extract_list<T>(self, result: &mut Vec<T>, arg: Arg<ListArg>) -> Self
+        where T: FromStr
+    {
+        unimplemented!()
+    }
 
     // accessors
 
+    /*
     /// Locate a required argument that takes a value and parse it into `result`
-    pub fn extract<T: FromStr>(self, result: &mut T, arg: arg::Arg) -> Self {
+    fn _extract_<T: FromStr>(self, result: &mut T, arg: arg::Arg) -> Self {
         let mut opt: Option<T> = None;
-        let attempt = self.try_extract(&mut opt, arg);
+        let attempt = self._try_extract_(&mut opt, arg);
         match opt {
             Some(r) => { *result = r; attempt },
             None => attempt.msg_usage_quit("")
@@ -124,7 +167,7 @@ impl Yaap {
     }
 
     /// Check for an argument that takes a value and parse it into `result`
-    pub fn try_extract<T: FromStr>(self, result: &mut Option<T>, arg: arg::Arg) -> Self {
+    fn _try_extract_<T: FromStr>(self, result: &mut Option<T>, arg: arg::Arg) -> Self {
         *result = None;
         for (i,slice) in self.argv.windows(2).enumerate() {
             // what is the right syntax for this? has it not landed?
@@ -149,13 +192,13 @@ impl Yaap {
     // uhhhhh this needs to be rethought
     // should it really be a runtime error to call .extract() on an arg
     //  with numargs set to many? can't verify lengths are correct statically 
-    fn extract_all<T: FromStr>(self, result: &mut Vec<T>, arg:arg::Arg) -> Self {
+    fn _extract_all_<T: FromStr>(self, result: &mut Vec<T>, arg:arg::Arg) -> Self {
         unimplemented!()
     }
 
     /// Determine whether a specific flag is set
     // TODO: return option instead? distinguish between flag absent and negated?
-    pub fn contains(self, result: &mut bool, arg: arg::Arg) -> Self {
+    fn _contains_(self, result: &mut bool, arg: arg::Arg) -> Self {
         *result = false;
         for (i,s) in self.argv.iter().enumerate() {
             match arg.matches(s) {
@@ -173,7 +216,7 @@ impl Yaap {
 
     /// Count the number of occurrences of a flag
     // TODO: be a different type?
-    pub fn count(self, result: &mut usize, arg: arg::Arg) -> Self {
+    fn _count_(self, result: &mut usize, arg: arg::Arg) -> Self {
         // TODO remove after counting?
         let mut count = 0;
         for (i,s) in self.argv.iter().enumerate() {
@@ -186,6 +229,7 @@ impl Yaap {
         *result = count;
         self
     }
+    */
 
 
     // helpers
