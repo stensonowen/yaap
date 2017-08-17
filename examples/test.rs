@@ -12,14 +12,17 @@ struct Args {
     z: usize,
 }
 
+use yaap::arg::FlagArg;
 fn main() {
     //let mut args: Args;// = Args { 0, false, String::new, false, false, 0 };
     let mut args = Args::default();
 
     Yaap::new()
         .build()
-        .contains(&mut args.x, Arg::new("x", "the exes"))
+        .contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
+        //.contains(&mut args.x, Arg::new("x", "the exes"))
+        //.contains(&mut args.x, Arg::from("x", "the exes"))
         ;
 
-    println!("x: {:?}", args);
+    println!("x: {:?}", args.x);
 }

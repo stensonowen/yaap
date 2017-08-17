@@ -48,7 +48,6 @@ impl YaapBuilder {
             auth: None,
             desc: None,
             vers: None,
-            //num_anon: NumArgs::Zero,
         }
     }
 
@@ -69,18 +68,17 @@ impl YaapBuilder {
         self
     }
 
-    fn get_free_args(argv: &Vec<String>) -> LinkedList<String> {
-        // get all variables that can't be flags
+    fn get_free_args(argv: &Vec<String>) -> LinkedList<usize> {
+        // store the index of all variables that can't be flags
         // i.e. anything not starting with a `-`
         //  or anything after the arg `--`
         let mut free = LinkedList::new();
         let mut remaining_are_free = false;
-        assert!(argv.len() > 1);
-        for arg in argv.iter().skip(1) {
+        for (i,arg) in argv.iter().enumerate() {
             if arg == "--" {
                 remaining_are_free = true;
             } else if remaining_are_free || arg.starts_with('-') == false {
-                free.push_back(arg.to_owned());
+                free.push_back(i);
             } 
         }
         free
@@ -105,7 +103,7 @@ impl YaapBuilder {
 pub struct Yaap {
     //argv: env::Args,
     argv: Vec<String>,
-    free: LinkedList<String>,
+    free: LinkedList<usize>,
     name: String,
     auth: Option<&'static str>,
     desc: Option<&'static str>,
@@ -117,7 +115,7 @@ pub struct Yaap {
     //errors: Vec<String>, // TODO: error type
 }
 
-use arg::{FlagArg, ValArg, ListArg};
+use arg::{ArgTrait, FlagArg, CountArg, ValArg, ListArg};
 
 impl Yaap { 
 
@@ -137,8 +135,26 @@ impl Yaap {
     // safer accessors 
 
 
+    pub fn count(self, result: &mut usize, arg: Arg<CountArg>) -> Self {
+        let mut count = 0;
+        for s in &self.argv {
+            if arg.matches(s) { 
+                count += 1; 
+            }
+        }
+        *result = count;
+        self
+    }
+
     pub fn contains(self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
-        unimplemented!()
+        *result = false;
+        for s in &self.argv {
+            if arg.matches(s) {
+                *result = true;
+                break;
+            }
+        }
+        self
     }
 
     pub fn extract_val<T>(self, result: &mut T, arg: Arg<ValArg>) -> Self 

@@ -1,50 +1,47 @@
 
-//use std::str::FromStr;
-
-/*
-pub enum NumArgs {
-    Zero,
-    Exactly(usize),
-    Unlimited,
-}
-*/
-
 pub trait ArgTrait {
-    //type Inner;
     fn from(long: &'static str, help: &'static str) -> Arg<Self> 
         where Self: Sized;
     fn matches(arg: &Arg<Self>, s: &str) -> bool where Self: Sized;
 }
 
-pub struct FlagArg { repeatable: bool }
+pub struct FlagArg;
+pub struct CountArg;
 pub struct ValArg;
 pub struct ListArg { len: Option<usize> }
 
 impl ArgTrait for FlagArg {
     fn from(long: &'static str, help: &'static str) -> Arg<FlagArg> {
-        // by default don't expect argument to be repeatable
-        Arg::<FlagArg>::from(long, help).repeatable(false)
+        Arg::<FlagArg>::new(long, help)
     }
-    fn matches(arg: &Arg<FlagArg>, s: &str) -> bool {
+    fn matches(arg: &Arg<Self>, s: &str) -> bool {
+        arg.short_matches(s)
+    }
+}
+
+impl ArgTrait for CountArg {
+    fn from(long: &'static str, help: &'static str) -> Arg<CountArg> {
+        Arg::<CountArg>::new(long, help)
+    }
+    fn matches(arg: &Arg<Self>, s: &str) -> bool {
         arg.short_matches(s)
     }
 }
 
 impl ArgTrait for ValArg {
     fn from(long: &'static str, help: &'static str) -> Arg<ValArg> {
-        Arg::<ValArg>::from(long, help)
+        Arg::<ValArg>::new(long, help)
     }
-    fn matches(arg: &Arg<ValArg>, s: &str) -> bool {
+    fn matches(arg: &Arg<Self>, s: &str) -> bool {
         arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
     }
 }
 
 impl ArgTrait for ListArg {
     fn from(long: &'static str, help: &'static str) -> Arg<ListArg> {
-        // by default assume can take an arbitrary number of values
-        Arg::<ListArg>::from(long, help).with_num_args(None)
+        Arg::<ListArg>::new(long, help)
     }
-    fn matches(arg: &Arg<ListArg>, s: &str) -> bool {
+    fn matches(arg: &Arg<Self>, s: &str) -> bool {
         arg.short_matches(s) || arg.long_matches(s) != ArgMatch::NoMatch
     }
 }
@@ -55,30 +52,37 @@ pub struct Arg<T: ArgTrait> {
     short: Option<char>,
     required: bool,
     help: &'static str,
-
     kind: T,
     // requires: Vec<Arg|String>
 }
 
 impl Arg<FlagArg> {
     fn new(long: &'static str, help: &'static str) -> Self {
-        unimplemented!()
+        Arg::default(long, help, FlagArg)
     }
-    fn repeatable(mut self, rep: bool) -> Self {
-        self.kind.repeatable = rep;
-        self
+    pub(super) fn matches(&self, s: &str) -> bool {
+        FlagArg::matches(self, s)
+    }
+}
+
+impl Arg<CountArg> {
+    fn new(long: &'static str, help: &'static str) -> Self {
+        Arg::default(long, help, CountArg)
+    }
+    pub(super) fn matches(&self, s: &str) -> bool {
+        CountArg::matches(self, s)
     }
 }
 
 impl Arg<ValArg> {
     fn new(long: &'static str, help: &'static str) -> Self {
-        unimplemented!()
+        Arg::default(long, help, ValArg)
     }
 }
 
 impl Arg<ListArg> {
     fn new(long: &'static str, help: &'static str) -> Self {
-        unimplemented!()
+        Arg::default(long, help, ListArg { len: None } )
     }
     fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;
@@ -107,22 +111,18 @@ impl<T: ArgTrait> Arg<T> {
             ArgMatch::NoMatch
         }
     }
-    //fn new(inner: T::Inner) -> Arg<T> { unimplemented!() }
-    fn from(long: &'static str, help: &'static str) -> Arg<T> {
-        T::from(long, help)
-    }
-    /*
-    pub fn new(long: &'static str, help: &'static str) -> Self { // `from`
-        Arg {
-            long,
-            help,
+    fn default(long: &'static str, help: &'static str, default: T) -> Arg<T> {
+        Arg::<T> {
+            long: long,
             short: None,
             required: false,
-            //repeatable: false,
-            //num_args: NumArgs::Zero,
+            help: help,
+            kind: default,
         }
     }
-    */
+    pub fn from(long: &'static str, help: &'static str) -> Arg<T> {
+        T::from(long, help)
+    }
 
     // TODO: is this the nicest way to do the builder pattern?
     // is `Arg.foo().is_required(true)` better than `Arg.foo().is_required()`?
@@ -138,30 +138,6 @@ impl<T: ArgTrait> Arg<T> {
         self
     }
 
-    /*
-    pub(super) fn matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
-        // check for short
-        match self.short {
-            Some(c) if s.starts_with(&['-',c,'='][..]) => 
-                return ArgMatch::Contained(&s[3..]),
-            Some(c) if s.starts_with(&['-',c][..]) && s.len() == 2 => 
-                return ArgMatch::Match,
-            _ => {},
-        }
-        // check for long
-        if s.starts_with("--") && s[2..].starts_with(self.long) {
-            if s.len() == 2 + self.long.len() {
-                ArgMatch::Match
-            } else if let Some('=') = s.chars().nth(2 + self.long.len()) {
-                ArgMatch::Contained(&s[self.long.len()+3..])
-            } else {
-                ArgMatch::NoMatch
-            }
-        } else {
-            ArgMatch::NoMatch
-        }
-    }
-    */
 }
 
 #[derive(Debug, PartialEq)]
