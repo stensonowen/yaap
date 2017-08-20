@@ -19,8 +19,8 @@ fn main() {
 
     Yaap::new()
         .build()
-        .contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
-        //.contains(&mut args.x, Arg::new("x", "the exes"))
+        //.contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
+        .contains(&mut args.x, Arg::from("x", "the exes"))
         //.contains(&mut args.x, Arg::from("x", "the exes"))
         ;
 

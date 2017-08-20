@@ -1,4 +1,8 @@
 
+// For now ArgTrait implementors T are just shims around Arg<T>
+// Is that a good design pattern? It's verbose but it's safe
+// I don't think there's a tidier way to do the same thing
+
 pub trait ArgTrait {
     fn from(long: &'static str, help: &'static str) -> Arg<Self> 
         where Self: Sized;
@@ -15,7 +19,7 @@ impl ArgTrait for FlagArg {
         Arg::<FlagArg>::new(long, help)
     }
     fn matches(arg: &Arg<Self>, s: &str) -> bool {
-        arg.short_matches(s)
+        arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
     }
 }
 
@@ -24,7 +28,7 @@ impl ArgTrait for CountArg {
         Arg::<CountArg>::new(long, help)
     }
     fn matches(arg: &Arg<Self>, s: &str) -> bool {
-        arg.short_matches(s)
+        arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
     }
 }
 
@@ -57,7 +61,7 @@ pub struct Arg<T: ArgTrait> {
 }
 
 impl Arg<FlagArg> {
-    fn new(long: &'static str, help: &'static str) -> Self {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, FlagArg)
     }
     pub(super) fn matches(&self, s: &str) -> bool {
@@ -66,7 +70,7 @@ impl Arg<FlagArg> {
 }
 
 impl Arg<CountArg> {
-    fn new(long: &'static str, help: &'static str) -> Self {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, CountArg)
     }
     pub(super) fn matches(&self, s: &str) -> bool {
@@ -75,13 +79,13 @@ impl Arg<CountArg> {
 }
 
 impl Arg<ValArg> {
-    fn new(long: &'static str, help: &'static str) -> Self {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, ValArg)
     }
 }
 
 impl Arg<ListArg> {
-    fn new(long: &'static str, help: &'static str) -> Self {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, ListArg { len: None } )
     }
     fn with_num_args(mut self, max: Option<usize>) -> Self {
