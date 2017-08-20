@@ -12,7 +12,6 @@ struct Args {
     z: usize,
 }
 
-use yaap::arg::FlagArg;
 fn main() {
     //let mut args: Args;// = Args { 0, false, String::new, false, false, 0 };
     let mut args = Args::default();
@@ -21,8 +20,12 @@ fn main() {
         .build()
         //.contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
         .contains(&mut args.x, Arg::from("x", "the exes"))
+        .count(&mut args.z, Arg::from("z", "zzz top")
+               .with_short('z')
+               )
         //.contains(&mut args.x, Arg::from("x", "the exes"))
         ;
 
     println!("x: {:?}", args.x);
+    println!("z: {:?}", args.z);
 }
