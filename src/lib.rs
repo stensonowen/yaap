@@ -22,10 +22,24 @@ pub use arg::{Arg};
  *  if someone ever makes the same call twice it'll silently fail the second time
  *  there's no reason to do that
  *  maybe should change name to `pop`?
+ *
+ * generating the usage is gonna be strange. we want to collect all possible
+ *  arguments before making/printing the usage, but arguments are handled in 
+ *  the moment. maybe the type that gets chained together is a Result? Or 
+ *  maybe just maintain a list of args and a list of errors and then at the 
+ *  end if there are any errors use all the args to print the usage. it will be
+ *  ambiguous whether all args were set properly (?) but it will always panic 
+ *  so it's fine. 
+ * The only concern is that we need a `.finish()` or something at the end, and
+ *  I'm not sure there's a great way to make that extremely clear. #[must_use]
+ *  would be cool but it doesn't look usable/stable/enabled/?
+ *  Maybe overriding Drop or something?
+ *  And then `.bind_free_vars(&mut Vec<_>)` or something could be used 
+ *   after the early stage but before the `finish` stage (maybe use a state
+ *   machine kind of pattern to enforce this?)
  */
 
 //struct Yaap(env::Args);
-
 
 pub struct YaapBuilder {
     argv: env::Args,
@@ -138,9 +152,7 @@ impl Yaap {
     pub fn count(self, result: &mut usize, arg: Arg<CountArg>) -> Self {
         let mut count = 0;
         for s in &self.argv {
-            if arg.matches(s) { 
-                count += 1; 
-            }
+            count += arg.matches(s);
         }
         *result = count;
         self

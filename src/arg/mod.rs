@@ -7,6 +7,10 @@
 pub mod types;
 pub use self::types::{ArgTrait, ValArg, ListArg, FlagArg, CountArg};
 
+pub mod err;
+use self::err::{ArgError, ArgResult};
+
+#[derive(Debug)]
 pub struct Arg<T: ArgTrait> {
     long: &'static str,
     short: Option<char>,
@@ -21,7 +25,7 @@ impl Arg<FlagArg> {
         Arg::default(long, help, FlagArg)
     }
     pub(super) fn matches(&self, s: &str) -> bool {
-        FlagArg::matches(self, s)
+        FlagArg::matches(self, s).unwrap()
     }
 }
 
@@ -29,8 +33,8 @@ impl Arg<CountArg> {
     pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, CountArg)
     }
-    pub(super) fn matches(&self, s: &str) -> bool {
-        CountArg::matches(self, s)
+    pub(super) fn matches(&self, s: &str) -> usize {
+        CountArg::matches(self, s).unwrap()
     }
 }
 
@@ -51,15 +55,22 @@ impl Arg<ListArg> {
 }
 
 impl<T: ArgTrait> Arg<T> {
-    fn short_matches(&self, s: &str) -> bool {
+    fn short_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
         if let Some(c) = self.short {
-            s.len() == 2 && s.starts_with(&['-',c][..])
+            if s.len() == 2 && s.starts_with(&['-',c][..]) {
+                ArgMatch::Match
+            } else if s.len() > 2 && s.starts_with(&['-',c,'='][..]) {
+                ArgMatch::Contained(&s[3..])
+            } else {
+                ArgMatch::NoMatch
+            }
         } else {
-            false
+            ArgMatch::NoMatch
         }
     }
     fn long_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
         if s.starts_with("--") && s[2..].starts_with(self.long) {
+            println!("looks good... ({:?}, {:?})", s, self);
             if s.len() == 2 + self.long.len() {
                 ArgMatch::Match
             } else if let Some('=') = s.chars().nth(2 + self.long.len()) {

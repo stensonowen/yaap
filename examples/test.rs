@@ -20,7 +20,7 @@ fn main() {
         .build()
         //.contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
         .contains(&mut args.x, Arg::from("x", "the exes"))
-        .count(&mut args.z, Arg::from("z", "zzz top")
+        .count(&mut args.z, Arg::from("omega", "zzz top")
                .with_short('z')
                )
         //.contains(&mut args.x, Arg::from("x", "the exes"))
