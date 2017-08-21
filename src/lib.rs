@@ -41,6 +41,9 @@ pub use arg::{Arg};
 
 //struct Yaap(env::Args);
 
+mod builder;
+use builder::{BuilderState};
+
 pub struct YaapBuilder {
     argv: env::Args,
     name: String,
@@ -149,6 +152,7 @@ impl Yaap {
     // safer accessors 
 
 
+    /*
     pub fn count(self, result: &mut usize, arg: Arg<CountArg>) -> Self {
         let mut count = 0;
         for s in &self.argv {
@@ -180,6 +184,7 @@ impl Yaap {
     {
         unimplemented!()
     }
+    */
 
     // accessors
 
