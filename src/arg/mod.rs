@@ -6,6 +6,7 @@
 
 pub mod types;
 pub use self::types::{ArgTrait, ValArg, ListArg, FlagArg, CountArg};
+pub use self::types::ArgMatch2;
 
 pub mod err;
 use self::err::{ArgError, ArgResult};
@@ -57,31 +58,31 @@ impl Arg<ListArg> {
 impl<T: ArgTrait> Arg<T> {
     // fn get_metadata(self) -> Arg<()> { unimplemented!() }
 
-    fn short_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+    fn short_matches<'a>(&self, s: &'a str) -> ArgMatch2 {
         if let Some(c) = self.short {
             if s.len() == 2 && s.starts_with(&['-',c][..]) {
-                ArgMatch::Match
+                ArgMatch2::NextArg
             } else if s.len() > 2 && s.starts_with(&['-',c,'='][..]) {
-                ArgMatch::Contained(&s[3..])
+                ArgMatch2::AtOffset(3)
             } else {
-                ArgMatch::NoMatch
+                ArgMatch2::NoMatch
             }
         } else {
-            ArgMatch::NoMatch
+            ArgMatch2::NoMatch
         }
     }
-    fn long_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+    fn long_matches<'a>(&self, s: &'a str) -> ArgMatch2 {
         if s.starts_with("--") && s[2..].starts_with(self.long) {
             println!("looks good... ({:?}, {:?})", s, self);
             if s.len() == 2 + self.long.len() {
-                ArgMatch::Match
+                ArgMatch2::NextArg
             } else if let Some('=') = s.chars().nth(2 + self.long.len()) {
-                ArgMatch::Contained(&s[self.long.len()+3..])
+                ArgMatch2::AtOffset(self.long.len()+3)
             } else {
-                ArgMatch::NoMatch
+                ArgMatch2::NoMatch
             }
         } else {
-            ArgMatch::NoMatch
+            ArgMatch2::NoMatch
         }
     }
     fn default(long: &'static str, help: &'static str, default: T) -> Arg<T> {
@@ -113,10 +114,11 @@ impl<T: ArgTrait> Arg<T> {
 
 }
 
+/*
 #[derive(Debug, PartialEq)]
 pub enum ArgMatch<'a> {
     Match,                  // `-c`, `--long`, etc.
     NoMatch,                // <not a valid match>
     Contained(&'a str)      // `-c=XX`, `--long=XX`
 }
-
+*/
