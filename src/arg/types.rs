@@ -18,6 +18,10 @@ pub trait ArgTrait : Debug {
     type MatchType;
     fn from(long: &'static str, help: &'static str) -> Arg<Self> 
         where Self: Sized;
+    //fn short_matches(arg: &Arg<Self>, s: &str) -> Result<Self::MatchType>
+    //    where Self: Sized;
+    //fn long_matches(arg: &Arg<Self>, s: &str) -> Result<Self::MatchType>
+    //    where Self: Sized;
     fn matches(arg: &Arg<Self>, s: &str) -> Result<Self::MatchType> 
         where Self: Sized;
 }
@@ -39,6 +43,25 @@ impl ArgTrait for FlagArg {
     fn from(long: &'static str, help: &'static str) -> Arg<FlagArg> {
         Arg::<FlagArg>::new(long, help)
     }
+
+    /*
+    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<bool> {
+        match arg.short_matches(s) {
+            ArgMatch::Match => Ok(true),
+            ArgMatch::NoMatch => Ok(false),
+            ArgMatch::Contained(_t) => Err(ArgError::UnexpectedValue),
+        }
+    }
+
+    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<bool> {
+        match arg.long_matches(s) {
+            ArgMatch::Match => Ok(true),
+            ArgMatch::NoMatch => Ok(false),
+            ArgMatch::Contained(_t) => Err(ArgError::UnexpectedValue),
+        }
+    }
+    */
+
     // The `contained` option is an invalid result
     fn matches(arg: &Arg<Self>, s: &str) -> Result<bool> {
         // is there some pattern that might make this nicer? 

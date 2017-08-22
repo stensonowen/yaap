@@ -1,5 +1,6 @@
 
 use std::env;
+use arg;
 
 pub trait BuilderState {}
 
@@ -19,11 +20,12 @@ pub struct Yaap<T: BuilderState> {
     //args: Vec<Arg<()>>
 
     name: String,
-    auth: Option<&'static str>,
+    //auth: Option<&'static str>,
     desc: Option<&'static str>,
-    vers: Option<&'static str>,
+    //vers: Option<&'static str>,
     help: Option<&'static str>,
 
+    //args: Vec<Arg>,
     state: T,
 }
 
@@ -98,8 +100,3 @@ impl Yaap<YaapArgs> {
 }
 
 impl Yaap<YaapDone> { }
-
-
-fn foo() {
-    let a = Yaap::create(env::args());
-}

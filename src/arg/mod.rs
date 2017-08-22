@@ -55,6 +55,8 @@ impl Arg<ListArg> {
 }
 
 impl<T: ArgTrait> Arg<T> {
+    // fn get_metadata(self) -> Arg<()> { unimplemented!() }
+
     fn short_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
         if let Some(c) = self.short {
             if s.len() == 2 && s.starts_with(&['-',c][..]) {
