@@ -43,11 +43,17 @@ impl Arg<ValArg> {
     pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, ValArg)
     }
+    pub(super) fn matches(&self, s: &str) -> ArgResult<ArgMatch2> {
+        ValArg::matches(self, s)
+    }
 }
 
 impl Arg<ListArg> {
     pub fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, ListArg { len: None } )
+    }
+    pub(super) fn matches(&self, s: &str) -> ArgResult<ArgMatch2> {
+        ListArg::matches(self, s)
     }
     pub fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;

@@ -7,6 +7,7 @@ use super::ArgResult as Result;
 // and then to every Arg
 // and then to every Arg impl
 // ... should probably do it though
+#[derive(Debug, PartialEq)]
 pub enum ArgMatch2 {
     NoMatch,
     NextArg,
@@ -116,6 +117,8 @@ impl ArgTrait for CountArg {
     }
 
     fn matches(arg: &Arg<Self>, s: &str) -> Result<usize> {
+        // TODO: allow `=` syntax?
+        // e.g. `-v=3`?
         let short_matches = Self::short_matches(arg, s);
         if short_matches == Ok(0) {
             Self::long_matches(arg, s)
@@ -135,11 +138,19 @@ impl ArgTrait for ValArg {
         Ok(arg.short_matches(s))
     }
 
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { unimplemented!() }
+    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
+        Ok(arg.long_matches(s))
+    }
 
     fn matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> {
         //arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
-        unimplemented!()
+        //unimplemented!()
+        let short_matches = Self::short_matches(arg, s);
+        if short_matches == Ok(ArgMatch2::NoMatch) {
+            Self::long_matches(arg, s)
+        } else {
+            short_matches
+        }
     }
 }
 
