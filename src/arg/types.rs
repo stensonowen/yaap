@@ -159,11 +159,21 @@ impl ArgTrait for ListArg {
     fn from(long: &'static str, help: &'static str) -> Arg<ListArg> {
         Arg::<ListArg>::new(long, help)
     }
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { unimplemented!() }
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { unimplemented!() }
+    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
+        Ok(arg.short_matches(s))
+    }
+    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
+        Ok(arg.long_matches(s))
+    }
     fn matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> {
         //arg.short_matches(s) || arg.long_matches(s) != ArgMatch::NoMatch
-        unimplemented!()
+        //unimplemented!()
+        let short_matches = Self::short_matches(arg, s);
+        if short_matches == Ok(ArgMatch2::NoMatch) {
+            Self::long_matches(arg, s)
+        } else {
+            short_matches
+        }
     }
 }
 

@@ -8,6 +8,7 @@ struct Args {
     b: bool,
     c: String,
 
+    w: Vec<i32>,
     x: bool,
     y: bool,
     z: usize,
@@ -25,10 +26,13 @@ fn main() {
                .with_short('z')
                )
         //.contains(&mut args.x, Arg::from("x", "the exes"))
-        .extract_val(&mut args.b, Arg::from("bool", "a boolean"))
+        //.extract_val(&mut args.b, Arg::from("bool", "a boolean"))
+        .extract_list(&mut args.w, Arg::from("nums", "nummms"))
+        //.foo()
         .finish()
         ;
 
+    println!("w: {:?}", args.w);
     println!("x: {:?}", args.x);
     println!("z: {:?}", args.z);
     println!("b: {:?}", args.b);

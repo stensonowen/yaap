@@ -311,18 +311,26 @@ impl Yaap<YaapArgs> {
         for (i,a) in self.argv.iter().enumerate() {
             let matches = arg.matches(a);
             if matches == Ok(ArgMatch2::NextArg) {
-                for elem in self.argv.iter().take(i) {
-                    if elem.starts_with('-') {
-                        break
-                    } 
+                if let Some(next_args) = self.argv.get(i+1..) {
+                    for elem in next_args {
+                        if elem.starts_with('-') {
+                            break
+                        }
+                        match elem.parse() {
+                            Ok(e) => res_vec.push(e),
+                            Err(e) => self.errs.push(ArgError::BadType),
+                        }
+                    }
+                } else {
+                    self.errs.push(ArgError::Missing);
+                }
+            } else if let Ok(ArgMatch2::AtOffset(j)) = matches {
+                for elem in a[j..].split(',') {
                     match elem.parse() {
                         Ok(e) => res_vec.push(e),
                         Err(e) => self.errs.push(ArgError::BadType),
                     }
                 }
-            } else if let Ok(ArgMatch2::AtOffset(j)) = matches {
-                // TODO: parse commas out of 
-                unimplemented!()
             } else if let Err(e) = matches {
                 self.errs.push(e)
             }
