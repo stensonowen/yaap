@@ -1,6 +1,6 @@
 
 use super::{Arg, /*ArgMatch,*/ ArgError};
-use super::ArgResult as Result;
+//use super::ArgResult as Result;
 
 // ugh... I think using ArgMatch requires adding `<'a>` to every ArgTrait
 // and then to every ArgTrait impl
@@ -15,33 +15,34 @@ pub enum ArgMatch2 {
 }
 
 use std::fmt::Debug;
-pub trait ArgTrait : Debug {
+pub trait ArgTrait : Debug + Default {
     type MatchType;
+    // TODO kill short/long matches
     fn from(long: &'static str, help: &'static str) -> Arg<Self> 
         where Self: Sized;
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<Self::MatchType>
+    fn short_matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
         where Self: Sized;
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<Self::MatchType>
+    fn long_matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
         where Self: Sized;
-    fn matches(arg: &Arg<Self>, s: &str) -> Result<Self::MatchType> 
+    fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
         where Self: Sized;
 }
 
 // do I have no choice but to expose these to the user?
 // they will have to see the type Arg<_>, but they shouldn't need to know it
 // ehh I guess they can just not import it
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FlagArg;
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CountArg;
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ValArg;
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ListArg { pub(super) len: Option<usize> }
 
 impl FlagArg {
     // The `contained` option is an invalid result
-    fn valid_match(am: ArgMatch2) -> Result<bool> {
+    fn valid_match(am: ArgMatch2) -> Result<bool, ArgError> {
         match am {
             ArgMatch2::NextArg => Ok(true),
             ArgMatch2::NoMatch => Ok(false),
@@ -51,19 +52,19 @@ impl FlagArg {
 }
 
 impl ArgTrait for FlagArg {
-    type MatchType = bool;
+    type MatchType = Result<bool, ArgError>;
     fn from(long: &'static str, help: &'static str) -> Arg<FlagArg> {
         Arg::<FlagArg>::new(long, help)
     }
 
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<bool> {
+    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<bool, ArgError> {
         FlagArg::valid_match(arg.short_matches(s))
     }
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<bool> {
+    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<bool, ArgError> {
         FlagArg::valid_match(arg.long_matches(s))
     }
 
-    fn matches(arg: &Arg<Self>, s: &str) -> Result<bool> {
+    fn matches(arg: &Arg<Self>, s: &str) -> Result<bool, ArgError> {
         let short_matches = FlagArg::short_matches(arg, s);
         if short_matches == Ok(false) {
             FlagArg::long_matches(arg, s)
@@ -74,12 +75,13 @@ impl ArgTrait for FlagArg {
 }
 
 impl ArgTrait for CountArg {
-    type MatchType = usize;
+    type MatchType = Result<usize, ArgError>;
     fn from(long: &'static str, help: &'static str) -> Arg<CountArg> {
         Arg::<CountArg>::new(long, help)
     }
 
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<usize> { 
+    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<usize, ArgError> { 
+        // TODO -c=8
         if let Some(c) = arg.short {
             let mut chars = s.chars();
             if chars.nth(0) == Some('-') && chars.all(|i| i ==c) {
@@ -99,7 +101,7 @@ impl ArgTrait for CountArg {
         }
     }
 
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<usize> { 
+    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<usize, ArgError> { 
         if s.starts_with("--") {
             // if s is only `--` and arg.long repeated n>0 times
             let occurrences = s.matches(arg.long).count();
@@ -116,7 +118,7 @@ impl ArgTrait for CountArg {
         }
     }
 
-    fn matches(arg: &Arg<Self>, s: &str) -> Result<usize> {
+    fn matches(arg: &Arg<Self>, s: &str) -> Result<usize, ArgError> {
         // TODO: allow `=` syntax?
         // e.g. `-v=3`?
         let short_matches = Self::short_matches(arg, s);
@@ -129,24 +131,25 @@ impl ArgTrait for CountArg {
 }
 
 impl ArgTrait for ValArg {
+    // can't return an error
     type MatchType = ArgMatch2;
     fn from(long: &'static str, help: &'static str) -> Arg<ValArg> {
         Arg::<ValArg>::new(long, help)
     }
 
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
-        Ok(arg.short_matches(s))
+    fn short_matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 { 
+        arg.short_matches(s)
     }
 
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
-        Ok(arg.long_matches(s))
+    fn long_matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 { 
+        arg.long_matches(s)
     }
 
-    fn matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> {
+    fn matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 {
         //arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
         //unimplemented!()
         let short_matches = Self::short_matches(arg, s);
-        if short_matches == Ok(ArgMatch2::NoMatch) {
+        if short_matches == ArgMatch2::NoMatch {
             Self::long_matches(arg, s)
         } else {
             short_matches
@@ -155,21 +158,22 @@ impl ArgTrait for ValArg {
 }
 
 impl ArgTrait for ListArg {
+    // can't return an error
     type MatchType = ArgMatch2;
     fn from(long: &'static str, help: &'static str) -> Arg<ListArg> {
         Arg::<ListArg>::new(long, help)
     }
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
-        Ok(arg.short_matches(s))
+    fn short_matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 { 
+        arg.short_matches(s)
     }
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> { 
-        Ok(arg.long_matches(s))
+    fn long_matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 { 
+        arg.long_matches(s)
     }
-    fn matches(arg: &Arg<Self>, s: &str) -> Result<ArgMatch2> {
+    fn matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 {
         //arg.short_matches(s) || arg.long_matches(s) != ArgMatch::NoMatch
         //unimplemented!()
         let short_matches = Self::short_matches(arg, s);
-        if short_matches == Ok(ArgMatch2::NoMatch) {
+        if short_matches == ArgMatch2::NoMatch {
             Self::long_matches(arg, s)
         } else {
             short_matches

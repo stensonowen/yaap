@@ -21,50 +21,30 @@ pub struct Arg<T: ArgTrait> {
     // requires: Vec<Arg|String>
 }
 
-impl Arg<FlagArg> {
-    pub fn new(long: &'static str, help: &'static str) -> Self {
-        Arg::default(long, help, FlagArg)
-    }
-    pub(super) fn matches(&self, s: &str) -> bool {
-        FlagArg::matches(self, s).unwrap()
-    }
-}
-
-impl Arg<CountArg> {
-    pub fn new(long: &'static str, help: &'static str) -> Self {
-        Arg::default(long, help, CountArg)
-    }
-    pub(super) fn matches(&self, s: &str) -> usize {
-        CountArg::matches(self, s).unwrap()
-    }
-}
-
-impl Arg<ValArg> {
-    pub fn new(long: &'static str, help: &'static str) -> Self {
-        Arg::default(long, help, ValArg)
-    }
-    pub(super) fn matches(&self, s: &str) -> ArgResult<ArgMatch2> {
-        ValArg::matches(self, s)
-    }
-}
-
 impl Arg<ListArg> {
-    pub fn new(long: &'static str, help: &'static str) -> Self {
-        Arg::default(long, help, ListArg { len: None } )
-    }
-    pub(super) fn matches(&self, s: &str) -> ArgResult<ArgMatch2> {
-        ListArg::matches(self, s)
-    }
     pub fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;
         self
     }
 }
 
-impl<T: ArgTrait> Arg<T> {
+impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
+
+    pub fn new(long: &'static str, help: &'static str) -> Self {
+        Arg::default(long, help, T::default())
+    }
+
+    pub fn from(long: &'static str, help: &'static str) -> Arg<T> {
+        T::from(long, help)
+    }
+
+    pub(super) fn matches(&self, s: &str) -> M {
+        T::matches(self, s)
+    }
+
     // fn get_metadata(self) -> Arg<()> { unimplemented!() }
 
-    fn short_matches<'a>(&self, s: &'a str) -> ArgMatch2 {
+    fn short_matches(&self, s: &str) -> ArgMatch2 {
         if let Some(c) = self.short {
             if s.len() == 2 && s.starts_with(&['-',c][..]) {
                 ArgMatch2::NextArg
@@ -77,7 +57,7 @@ impl<T: ArgTrait> Arg<T> {
             ArgMatch2::NoMatch
         }
     }
-    fn long_matches<'a>(&self, s: &'a str) -> ArgMatch2 {
+    fn long_matches(&self, s: &str) -> ArgMatch2 {
         if s.starts_with("--") && s[2..].starts_with(self.long) {
             println!("looks good... ({:?}, {:?})", s, self);
             if s.len() == 2 + self.long.len() {
@@ -91,6 +71,7 @@ impl<T: ArgTrait> Arg<T> {
             ArgMatch2::NoMatch
         }
     }
+
     fn default(long: &'static str, help: &'static str, default: T) -> Arg<T> {
         Arg::<T> {
             long: long,
@@ -99,9 +80,6 @@ impl<T: ArgTrait> Arg<T> {
             help: help,
             kind: default,
         }
-    }
-    pub fn from(long: &'static str, help: &'static str) -> Arg<T> {
-        T::from(long, help)
     }
 
     // TODO: is this the nicest way to do the builder pattern?
