@@ -5,28 +5,33 @@
 
 
 pub mod types;
-pub use self::types::{ArgTrait, ValArg, ListArg, FlagArg, CountArg};
-pub use self::types::ArgMatch2;
+//pub use self::types::{ArgTrait, ValArg, ListArg, FlagArg, CountArg};
+//pub use self::types::{ArgTrait, };
+pub use super::ArgTrait;
+//pub use self::types::ArgMatch2;
+pub use super::ArgMatch2;
 
 pub mod err;
-use self::err::{ArgError, ArgResult};
+pub use self::err::{ArgError, ArgResult};
 
 #[derive(Debug)]
 pub struct Arg<T: ArgTrait> {
-    long: &'static str,
-    short: Option<char>,
+    pub(crate) long: &'static str,
+    pub(crate) short: Option<char>,
     required: bool,
     help: &'static str,
-    kind: T,
+    pub(crate) kind: T,
     // requires: Vec<Arg|String>
 }
 
+/*
 impl Arg<ListArg> {
     pub fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;
         self
     }
 }
+*/
 
 impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
 
@@ -44,7 +49,7 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
 
     // fn get_metadata(self) -> Arg<()> { unimplemented!() }
 
-    fn short_matches(&self, s: &str) -> ArgMatch2 {
+    pub fn short_matches(&self, s: &str) -> ArgMatch2 {
         if let Some(c) = self.short {
             if s.len() == 2 && s.starts_with(&['-',c][..]) {
                 ArgMatch2::NextArg
@@ -57,7 +62,7 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
             ArgMatch2::NoMatch
         }
     }
-    fn long_matches(&self, s: &str) -> ArgMatch2 {
+    pub fn long_matches(&self, s: &str) -> ArgMatch2 {
         if s.starts_with("--") && s[2..].starts_with(self.long) {
             println!("looks good... ({:?}, {:?})", s, self);
             if s.len() == 2 + self.long.len() {
