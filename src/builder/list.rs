@@ -57,7 +57,7 @@ impl Yaap<YaapArgs> {
                         }
                     }
                 } else {
-                    self.errs.push(ArgError::Missing);
+                    self.errs.push(ArgError::MissingArg);
                 }
             } else if let ArgMatch2::AtOffset(j) = matches {
                 // `--list=1,2,3,4`

@@ -50,9 +50,10 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
 
     pub(super) fn short_matches(&self, s: &str) -> ArgMatch2 {
         if let Some(c) = self.short {
-            if s.len() == 2 && s.starts_with(&['-',c][..]) {
+            if s.len() == 2 && s.chars().zip(&['-',c]).all(|(a,&b)| a==b) {
                 ArgMatch2::NextArg
-            } else if s.len() > 2 && s.starts_with(&['-',c,'='][..]) {
+            } else if s.len() > 2 && 
+                    s.chars().zip(&['-',c,'=']).all(|(a,&b)| a==b) {
                 ArgMatch2::AtOffset(3)
             } else {
                 ArgMatch2::NoMatch

@@ -4,7 +4,7 @@ pub enum ArgError {
     UnexpectedValue,    // flag given a value, e.g. `-v=9`
     MissingValue,       // last argument expected a value
     BadType,            // e.g. `--num false`
-    Missing,            // required argument omitted
+    MissingArg,         // required argument omitted
     Repetition,         // argument set multiple times unexpectedly
 }
 

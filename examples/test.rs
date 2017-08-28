@@ -25,15 +25,16 @@ fn main() {
         .count(&mut args.z, Arg::from("omega", "zzz top")
                .with_short('z')
                )
-        //.contains(&mut args.x, Arg::from("x", "the exes"))
-        //.extract_val(&mut args.b, Arg::from("bool", "a boolean"))
-        .extract_list(&mut args.w, Arg::from("nums", "nummms"))
-        //.foo()
+        //.extract_val(&mut args.a, Args::from("alpha", "first").with_short('a').with_default(42))
+        .extract_val(&mut args.a, Arg::from("alpha", "first").with_default(42))
+        .extract_val(&mut args.b, Arg::from("bool", "a boolean"))
+        //.extract_list(&mut args.w, Arg::from("nums", "nummms"))
         .finish()
         ;
 
-    println!("w: {:?}", args.w);
-    println!("x: {:?}", args.x);
-    println!("z: {:?}", args.z);
-    println!("b: {:?}", args.b);
+    //println!("w: {:?}", args.w);
+    //println!("x: {:?}", args.x);
+    //println!("z: {:?}", args.z);
+    //println!("b: {:?}", args.b);
+    println!("{:?}", args);
 }

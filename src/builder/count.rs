@@ -40,12 +40,14 @@ impl Yaap<YaapArgs> {
 impl Arg<CountArg> {
     fn short_matches_count(&self, s: &str) -> Result<usize, ArgError> { 
         if let Some(c) = self.short {
-            println!("uhhh `{}`", s);
+            //println!("uhhh `{}`", s);
             let mut chars = s.chars();
             if chars.nth(0) == Some('-') && chars.all(|i| i==c) {
                 // `-vvvv`
                 Ok(s.len()-1)
-            } else if s.starts_with(&['-',c,'='][..]) {
+            //} else if s.starts_with(&['-',c,'='][..]) {
+            } else if s.chars().zip(&['-',c,'=']).all(|(a,&b)| a==b) {
+                println!("uhhh `{}`, `{}`", c, s);
                 // `-v=8`
                 match s[3..].parse() {
                     Ok(n) => Ok(n),
