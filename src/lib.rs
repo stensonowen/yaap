@@ -1,11 +1,14 @@
 
 pub mod arg;
 pub use arg::{Arg};
-//use arg::types::{ArgTrait, ArgMatch2, CountArg, FlagArg, ValArg, ListArg};
-//use arg::types::{ArgMatch2};
-use arg::err::ArgError;
+
+pub mod err;
+pub use err::ArgError;
 
 pub mod builder;
+pub use builder::Yaap;
+
+use std::fmt::Debug;
 
 #[derive(Debug, PartialEq)]
 pub enum ArgMatch2 {
@@ -14,19 +17,19 @@ pub enum ArgMatch2 {
     AtOffset(usize),
 }
 
-use std::fmt::Debug;
 pub trait ArgTrait : Debug + Default {
     type MatchType;
-    // TODO kill short/long matches
-    fn from(long: &'static str, help: &'static str) -> Arg<Self> 
-        where Self: Sized;
-    fn short_matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
-        where Self: Sized;
-    fn long_matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
-        where Self: Sized;
+
+    //fn from(long: &'static str, help: &'static str) -> Arg<Self> {
+    //    //Arg::new(long, help)
+    //}
+
     fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
         where Self: Sized;
 }
+
+//use std::str::FromStr;
+//pub trait Parsable : Debug + FromStr { }
 
 /*
  * KEEP IN MIND
@@ -70,156 +73,3 @@ pub trait ArgTrait : Debug + Default {
 // 1. set yaap options (e.g. `name`, `help`, ...
 // 2. extract options (e.g. `contains`, `extract_list`, ...
 // 3. collect free arguments
-
-/*
-impl Yaap<YaapArgs> { 
-    pub fn count(mut self, result: &mut usize, arg: Arg<CountArg>) -> Self {
-        let mut count = 0;
-        for s in &self.argv {
-            match arg.matches(s) {
-                Ok(n) => count += n,
-                Err(e) => self.errs.push(e),
-            }
-        }
-        *result = count;
-        self
-    }
-
-    pub fn contains(mut self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
-        *result = false;
-        for s in &self.argv {
-            match arg.matches(s) {
-                Ok(true) => {
-                    *result = true;
-                    break
-                },
-                Ok(false) => continue,
-                Err(e) => self.errs.push(e),
-            }
-        }
-        self
-    }
-
-    // required value
-    pub fn extract_val<T>(mut self, result: &mut T, arg: Arg<ValArg>) -> Self 
-        where T: FromStr
-    {
-        // TODO: in the future this can just wrap `try_extract_val`
-        //  my only worry is that it'll screw up the help message...
-        let mut times_set = 0usize;
-        // can't use `.windows()` here because might be missing last argument
-        //  in that case the args are malformed but should check anyway
-        for (i,a) in self.argv.iter().enumerate() {
-            // if relevant, get the 
-            let arg_str = match arg.matches(a) {
-                ArgMatch2::NoMatch => continue,
-                ArgMatch2::AtOffset(i) => &a[i..],
-                ArgMatch2::NextArg => match self.argv.get(i+1) {
-                    Some(next) => next,
-                    None => { self.errs.push(ArgError::MissingValue); continue }
-                },
-            };
-            match arg_str.parse() {
-                Ok(arg_val) => {
-                    *result = arg_val;
-                    times_set += 1;
-                },
-                Err(e) => {
-                    self.errs.push(ArgError::BadType);
-                }
-            }
-        }
-        if times_set == 0 {
-            self.errs.push(ArgError::Missing);
-        } else if times_set > 1 {
-            self.errs.push(ArgError::Repetition);
-        }
-        self
-    }
-
-    // optional value
-    pub fn try_extract_val<T>(mut self, result: &mut Option<T>, arg: Arg<ValArg>) -> Self
-        where T: FromStr
-    {
-        let mut times_set = 0usize;
-        // can't use `.windows()` here because might be missing last argument
-        //  in that case the args are malformed but should check anyway
-        for (i,a) in self.argv.iter().enumerate() {
-            // if relevant, get the 
-            let arg_str = match arg.matches(a) {
-                ArgMatch2::NoMatch => continue,
-                ArgMatch2::AtOffset(i) => &a[i..],
-                ArgMatch2::NextArg => {
-                    if let Some(next) = self.argv.get(i+1) {
-                        next
-                    } else {
-                        self.errs.push(ArgError::MissingValue);
-                        continue
-                    }
-                },
-            };
-            match arg_str.parse() {
-                Ok(arg_val) => {
-                    *result = Some(arg_val);
-                    times_set += 1;
-                },
-                Err(e) => {
-                    self.errs.push(ArgError::BadType);
-                    continue
-                }
-            }
-        }
-        if times_set == 0 {
-            self.errs.push(ArgError::Missing);
-        } else if times_set > 1 {
-            self.errs.push(ArgError::Repetition);
-        }
-        self
-    }
-
-    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg>) -> Self
-        where T: FromStr
-    {
-        let mut res_vec = vec![];
-        for (i,a) in self.argv.iter().enumerate() {
-            let matches = arg.matches(a);
-            if matches == ArgMatch2::NextArg {
-                if let Some(next_args) = self.argv.get(i+1..) {
-                    for elem in next_args {
-                        if elem.starts_with('-') {
-                            break
-                        }
-                        match elem.parse() {
-                            Ok(e) => res_vec.push(e),
-                            Err(e) => self.errs.push(ArgError::BadType),
-                        }
-                    }
-                } else {
-                    self.errs.push(ArgError::Missing);
-                }
-            } else if let ArgMatch2::AtOffset(j) = matches {
-                for elem in a[j..].split(',') {
-                    match elem.parse() {
-                        Ok(e) => res_vec.push(e),
-                        Err(e) => self.errs.push(ArgError::BadType),
-                    }
-                }
-            } 
-        }
-        *result = res_vec;
-        self
-    }
-
-    pub fn finish(self) {
-        mem::forget(self.state);
-        if self.errs.is_empty() {
-            println!("No errors!");
-        } else {
-            println!("Errors: {:?}", self.errs);
-        }
-    }
-}
-*/
-
-//impl Yaap<YaapDone> { }
-

@@ -1,34 +1,21 @@
-use super::Arg;
-use super::super::{ArgTrait, ArgMatch2};
+use super::{Yaap, YaapOpts, YaapArgs, Arg};
+use super::super::{ArgTrait, ArgMatch2, ArgError};
+use std::str::FromStr;
 
 #[derive(Debug, Default)]
 pub struct ListArg { pub(super) len: Option<usize> }
 
 impl ArgTrait for ListArg {
-    // can't return an error
     type MatchType = ArgMatch2;
-    fn from(long: &'static str, help: &'static str) -> Arg<ListArg> {
-        Arg::<ListArg>::new(long, help)
-    }
-    fn short_matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 { 
-        arg.short_matches(s)
-    }
-    fn long_matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 { 
-        arg.long_matches(s)
-    }
+
     fn matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 {
-        //arg.short_matches(s) || arg.long_matches(s) != ArgMatch::NoMatch
-        //unimplemented!()
-        let short_matches = Self::short_matches(arg, s);
-        if short_matches == ArgMatch2::NoMatch {
-            Self::long_matches(arg, s)
-        } else {
-            short_matches
+        match arg.short_matches(s) {
+            ArgMatch2::NoMatch => arg.long_matches(s),
+            sm => sm
         }
     }
 }
 
-//impl <T: ArgTrait> Arg<T> where T: ArgTrait {
 impl Arg<ListArg> {
     pub fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;
@@ -36,4 +23,55 @@ impl Arg<ListArg> {
     }
 }
 
+impl Yaap<YaapOpts> {
 
+    pub fn extract_list<T>(self, result: &mut Vec<T>, arg: Arg<ListArg>) 
+        -> Yaap<YaapArgs>
+        where T: FromStr
+    {
+        let new: Yaap<YaapArgs> = self.into();
+        new.extract_list(result, arg)
+    }
+
+}
+
+impl Yaap<YaapArgs> {
+
+    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg>)
+        -> Self
+        where T: FromStr
+    {
+        let mut res_vec = vec![];
+        for (i,a) in self.argv.iter().enumerate() {
+            let matches = arg.matches(a);
+            if matches == ArgMatch2::NextArg {
+                // `--list 1, 2, 3, 4`
+                if let Some(next_args) = self.argv.get(i+1..) {
+                    for elem in next_args.iter()
+                        .take_while(|e| !e.starts_with('-')) 
+                    {
+                        match elem.parse() {
+                            Ok(e) => res_vec.push(e),
+                            Err(_) => self.errs.push(ArgError::BadType),
+                            // TODO: preserve type of `_`?
+                        }
+                    }
+                } else {
+                    self.errs.push(ArgError::Missing);
+                }
+            } else if let ArgMatch2::AtOffset(j) = matches {
+                // `--list=1,2,3,4`
+                for elem in a[j..].split(',') {
+                    match elem.parse() {
+                        Ok(e) => res_vec.push(e),
+                        Err(_) => self.errs.push(ArgError::BadType),
+                        // TODO: preserve type of `_`?
+                    }
+                }
+            } 
+        }
+        *result = res_vec;
+        self
+    }
+
+}
