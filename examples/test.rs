@@ -1,6 +1,5 @@
 extern crate yaap;
 use yaap::{Yaap, Arg};
-use std::env;
 
 #[derive(Debug, Default)]
 struct Args {
@@ -18,7 +17,7 @@ fn main() {
     //let mut args: Args;// = Args { 0, false, String::new, false, false, 0 };
     let mut args = Args::default();
 
-    Yaap::create(env::args())
+    Yaap::create()
         //.build()
         //.contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
         .contains(&mut args.x, Arg::from("x", "the exes"))

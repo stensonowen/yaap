@@ -40,14 +40,12 @@ impl Yaap<YaapArgs> {
 impl Arg<CountArg> {
     fn short_matches_count(&self, s: &str) -> Result<usize, ArgError> { 
         if let Some(c) = self.short {
-            //println!("uhhh `{}`", s);
             let mut chars = s.chars();
             if chars.nth(0) == Some('-') && chars.all(|i| i==c) {
                 // `-vvvv`
                 Ok(s.len()-1)
             //} else if s.starts_with(&['-',c,'='][..]) {
             } else if s.chars().zip(&['-',c,'=']).all(|(a,&b)| a==b) {
-                println!("uhhh `{}`, `{}`", c, s);
                 // `-v=8`
                 match s[3..].parse() {
                     Ok(n) => Ok(n),
@@ -69,14 +67,14 @@ impl Arg<CountArg> {
             let occurrences = s.matches(self.long).count();
             if occurrences * self.long.len() + 2 == s.len() {
                 Ok(occurrences)
+            } else if let ArgMatch2::AtOffset(i) = self.long_matches(s) {
+                // `--long=5`
+                match s[i..].parse() {
+                    Ok(n) => Ok(n),
+                    Err(_) => Err(ArgError::BadType)
+                }
             } else {
                 Ok(0)
-            }
-        } else if let ArgMatch2::AtOffset(i) = self.long_matches(s) {
-            // `--long=8`
-            match s[i..].parse() {
-                Ok(n) => Ok(n),
-                Err(_) => Err(ArgError::BadType)
             }
         } else {
             // no match

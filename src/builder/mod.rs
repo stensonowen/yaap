@@ -94,9 +94,7 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
 
 impl Yaap<YaapOpts> {
 
-    pub fn create(mut argv: env::Args) -> Yaap<YaapOpts> {
-        let name = argv.nth(0).unwrap(); // TODO
-        let argv: Vec<_> = argv.collect();
+    pub fn create_from(name: String, argv: Vec<String>) -> Yaap<YaapOpts> {
         let free = argv.iter().map(|a| a == "--").collect();
         Yaap {
             argv, free, name,
@@ -107,6 +105,13 @@ impl Yaap<YaapOpts> {
             help: None,
             state: YaapOpts
         }
+    }
+
+    pub fn create() -> Yaap<YaapOpts> {
+        let mut args = env::args();
+        let name = args.nth(0).unwrap(); // TODO ?
+        let argv = args.collect();
+        Self::create_from(name, argv)
     }
 
     // set common options

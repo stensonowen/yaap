@@ -34,6 +34,14 @@ impl Yaap<YaapOpts> {
         let new: Yaap<YaapArgs> = self.into();
         new.extract_val(result, arg)
     }
+
+    pub fn try_extract_val<T>(self, result: &mut Option<T>, arg: Arg<ValArg<T>>)
+        -> Yaap<YaapArgs>
+        where T: FromStr + Default + Debug
+    {
+        let new: Yaap<YaapArgs> = self.into();
+        new.try_extract_val(result, arg)
+    }
 }
 
 impl Yaap<YaapArgs> {
