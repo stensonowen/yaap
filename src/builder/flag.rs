@@ -30,6 +30,7 @@ impl Yaap<YaapOpts> {
 
 impl Yaap<YaapArgs> {
     pub fn contains(mut self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
+        // TODO verify only one exists ?
         *result = false;
         for s in &self.argv {
             match arg.matches(s) {

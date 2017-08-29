@@ -47,9 +47,10 @@ impl Yaap<YaapArgs> {
             if matches == ArgMatch2::NextArg {
                 // `--list 1, 2, 3, 4`
                 if let Some(next_args) = self.argv.get(i+1..) {
-                    for elem in next_args.iter()
-                        .take_while(|e| !e.starts_with('-')) 
+                    for (j, elem) in next_args.iter()
+                        .take_while(|e| !e.starts_with('-')).enumerate()
                     {
+                        self.free[j] = false;
                         match elem.parse() {
                             Ok(e) => res_vec.push(e),
                             Err(_) => self.errs.push(ArgError::BadType),
@@ -61,6 +62,7 @@ impl Yaap<YaapArgs> {
                 }
             } else if let ArgMatch2::AtOffset(j) = matches {
                 // `--list=1,2,3,4`
+                self.free[i] = false;
                 for elem in a[j..].split(',') {
                     match elem.parse() {
                         Ok(e) => res_vec.push(e),

@@ -68,6 +68,16 @@ pub trait ArgTrait : Debug + Default {
  *  And then `.bind_free_vars(&mut Vec<_>)` or something could be used 
  *   after the early stage but before the `finish` stage (maybe use a state
  *   machine kind of pattern to enforce this?)
+ *
+ * negatable flags (e.g. --long, --no-long, -c, --no-c)
+ *
+ * help message
+ *
+ * reduce allocations ??
+ *
+ * unit tests
+ *
+ * perf??
  */
 
 

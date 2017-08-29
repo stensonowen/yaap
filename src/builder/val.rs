@@ -60,9 +60,14 @@ impl Yaap<YaapArgs> {
                 ArgMatch2::AtOffset(i) => &a[i..],
                 ArgMatch2::NextArg => match self.argv.get(i+1) {
                     Some(next) => next,
-                    None => { self.errs.push(ArgError::MissingValue); continue }
+                    None => { 
+                        self.errs.push(ArgError::MissingValue); 
+                        self.free[i] = false;
+                        continue 
+                    }
                 },
             };
+            self.free[i] = false;
             match arg_str.parse() {
                 Ok(arg_val) => {
                     *result = arg_val;
@@ -103,10 +108,12 @@ impl Yaap<YaapArgs> {
                         next
                     } else {
                         self.errs.push(ArgError::MissingValue);
+                        self.free[i] = false;
                         continue
                     }
                 },
             };
+            self.free[i] = false;
             match arg_str.parse() {
                 Ok(arg_val) => {
                     *result = Some(arg_val);

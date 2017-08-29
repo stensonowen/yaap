@@ -11,13 +11,14 @@ mod list;
 
 pub trait BuilderState {}
 
-pub struct YaapOpts;
-pub struct YaapArgs;
+#[must_use] pub struct YaapOpts; 
+#[must_use] pub struct YaapArgs; 
 pub struct YaapDone;
 
 impl BuilderState for YaapOpts {}
 impl BuilderState for YaapArgs {}
 impl BuilderState for YaapDone {}
+
 
 pub struct Yaap<T: BuilderState> {
     argv: Vec<String>,
@@ -45,13 +46,13 @@ pub struct Yaap<T: BuilderState> {
 
 impl Drop for YaapOpts {
     fn drop(&mut self) {
-        panic!("You probably forgot the `.finish()`");
+        panic!("You probably forgot `.finish()`");
     }
 }
 
 impl Drop for YaapArgs {
     fn drop(&mut self) {
-        panic!("You probably forgot the `.finish()`");
+        panic!("You probably forgot `.finish()`");
     }
 }
 
@@ -95,7 +96,7 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
 impl Yaap<YaapOpts> {
 
     pub fn create_from(name: String, argv: Vec<String>) -> Yaap<YaapOpts> {
-        let free = argv.iter().map(|a| a == "--").collect();
+        let free = argv.iter().map(|a| !a.starts_with('-')).collect();
         Yaap {
             argv, free, name,
             errs: vec![],
@@ -134,10 +135,11 @@ impl Yaap<YaapOpts> {
 
     // transition to Yaap<YaapDone>
 
-    pub fn collect_free_args<T>(self, _result: &mut Vec<T>) -> Yaap<YaapArgs> 
+    pub fn collect_free_args<T>(self, result: &mut Vec<T>) -> Yaap<YaapDone> 
         where T: FromStr
     {
-        self.into()
+        let new: Yaap<YaapArgs> = self.into();
+        new.collect_free_args(result)
     }
 
     pub fn finish(self) -> Yaap<YaapDone> {
@@ -147,12 +149,44 @@ impl Yaap<YaapOpts> {
 }
 
 impl Yaap<YaapArgs> { 
-    pub fn finish(self) -> Yaap<YaapDone> {
-        if self.errs.is_empty() {
-            println!("No errors!");
-        } else {
-            println!("Errors: {:?}", self.errs);
+    pub fn collect_free_args<T>(mut self, result: &mut Vec<T>) -> Yaap<YaapDone> 
+        where T: FromStr
+    {
+        // TODO: maybe make `argv` a field of YaapOpts/YaapArgs or something
+        // that way it wouldn't be present in `Yaap<YaapDone>`, which would 
+        //  mean these free args don't need to be cloned
+        // ehhh, not particularly great either way
+        let mut free = vec![];
+        let mut rest_are_free = false;
+        for (arg, &is_free) in self.argv.iter().zip(self.free.iter()) {
+            if rest_are_free || is_free {
+                match arg.parse() {
+                    Ok(t) => free.push(t),
+                    Err(_) => self.errs.push(ArgError::BadType),
+                }
+            } else if arg == "--" {
+                rest_are_free = true;
+            }
         }
+        *result = free;
         self.into()
     }
+
+    pub fn finish(self) -> Yaap<YaapDone> {
+        let new: Yaap<YaapDone> = self.into();
+        new.finish()
+    }
+}
+
+impl Yaap<YaapDone> {
+    pub fn finish(self) -> Yaap<YaapDone> {
+        if !self.errs.is_empty() {
+            panic!("Errors: {:?}", self.errs);
+        } else {
+            self
+        }
+    }
+
+    // TODO: getters
+    // in case someone wants to see the help message or metadata / args / something
 }

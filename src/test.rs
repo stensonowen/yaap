@@ -24,7 +24,7 @@ mod test {
             .try_extract_val(&mut b, Arg::from("b", "bbb"))
             .finish();
 
-        assert!(b.is_some());
+        assert_eq!(b, Some(true));
     }
 
     #[test]
@@ -46,4 +46,17 @@ mod test {
 
         assert_eq!(c, 12);
     }
+
+    #[test]
+    fn collect_free() {
+        let mut free: Vec<u8> = vec![];
+        Yaap::create_from(String::new(), own("0 1 2 3 4".split(' ').collect()))
+            .collect_free_args(&mut free)
+            .finish();
+
+        assert_eq!(free.len(), 5);
+    }
+
+
 }
+
