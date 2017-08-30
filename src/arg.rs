@@ -9,8 +9,8 @@ pub use super::{ArgTrait, ArgMatch2};
 pub struct Arg<T: ArgTrait> {
     pub(crate) long: &'static str,
     pub(crate) short: Option<char>,
-    required: bool,
-    help: &'static str,
+    pub(crate) required: bool,
+    pub(crate) help: &'static str,
     pub(crate) kind: T,
     // requires: Vec<Arg|String>
 }

@@ -205,7 +205,50 @@ impl Yaap<YaapDone> {
         if let Some(h) = self.help { 
             h.to_owned()
         } else {
-            unimplemented!()
+            let mut s = format!("{}{}
+Usage: {} [OPTIONS] [FREE ARGS ?]
+
+Options:
+",
+                self.desc.unwrap_or(""), 
+                if self.desc.is_some() { "\n\n" } else { "" },
+                self.name, // if self.has_free
+                );
+            let help_arg = Arg::from("--help", "Display this message")
+                .with_short('h');
+            let max_arg_len = self.args.iter().fold("help".len(), |acc, arg| {
+                ::std::cmp::max(acc, arg.long.len())
+            });
+            let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
+            for arg in vec![help_arg].iter().chain(self.args.iter()) { 
+                let mut len = 0;
+                let mut arg_s = String::from("\t");
+                // short
+                if let Some(c) = arg.short {
+                    arg_s.push('-');
+                    arg_s.push(c);
+                    arg_s.push(' ');
+                    len += 3;
+                }
+                // long
+                arg_s.push_str("--");
+                arg_s.push_str(arg.long);
+                len += 2 + arg.long.len();
+                // padding
+                for _ in 0 .. (max_len - len) {
+                    arg_s.push(' ');
+                }
+                // help
+                arg_s.push_str(arg.help);
+                // required
+                if arg.required {
+                    arg_s.push_str(" (required)");
+                }
+                arg_s.push('\n');
+                s.push_str(&arg_s);
+            }
+            s.push('\n');
+            s
         }
     }
 }
