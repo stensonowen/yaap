@@ -33,6 +33,7 @@ impl Yaap<YaapArgs> {
             }
         }
         *result = count;
+        self.args.push(arg.strip_type());
         self
     }
 }

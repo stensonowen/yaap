@@ -44,6 +44,7 @@ impl Yaap<YaapArgs> {
                 Err(e) => self.errs.push(e),
             }
         }
+        self.args.push(arg.strip_type());
         self
     }
 }

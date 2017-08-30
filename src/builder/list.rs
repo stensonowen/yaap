@@ -77,6 +77,7 @@ impl Yaap<YaapArgs> {
             } 
         }
         *result = res_vec;
+        self.args.push(arg.strip_type());
         self
     }
 

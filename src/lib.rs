@@ -22,12 +22,7 @@ pub enum ArgMatch2 {
 pub trait ArgTrait : Debug + Default {
     type MatchType;
 
-    //fn from(long: &'static str, help: &'static str) -> Arg<Self> {
-    //    //Arg::new(long, help)
-    //}
-
-    fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType
-        where Self: Sized;
+    fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType;
 }
 
 //use std::str::FromStr;

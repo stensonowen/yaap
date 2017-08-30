@@ -18,8 +18,7 @@ pub struct Arg<T: ArgTrait> {
 
 impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
 
-    /*
-    pub(super) fn new(long: &'static str, help: &'static str) -> Self {
+    pub fn from(long: &'static str, help: &'static str) -> Arg<T> {
         Arg::<T> {
             long: long,
             short: None,
@@ -28,25 +27,20 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
             kind: T::default(),
         }
     }
-    */
 
-    pub fn from(long: &'static str, help: &'static str) -> Arg<T> {
-        //T::from(long, help)
-        //Arg::<T>::new(long, help)
-        Arg::<T> {
-            long: long,
-            short: None,
-            required: false,
-            help: help,
-            kind: T::default(),
+    pub(super) fn strip_type(self) -> Arg<()> {
+        Arg {
+            long: self.long,
+            short: self.short,
+            required: self.required,
+            help: self.help, // heh
+            kind: (),
         }
     }
 
     pub(super) fn matches(&self, s: &str) -> M {
         T::matches(self, s)
     }
-
-    // fn get_metadata(self) -> Arg<()> { unimplemented!() }
 
     pub(super) fn short_matches(&self, s: &str) -> ArgMatch2 {
         if let Some(c) = self.short {

@@ -13,20 +13,18 @@ pub trait BuilderState {}
 
 #[must_use] pub struct YaapOpts; 
 #[must_use] pub struct YaapArgs; 
-pub struct YaapDone;
+#[derive(Debug)] pub struct YaapDone;
 
 impl BuilderState for YaapOpts {}
 impl BuilderState for YaapArgs {}
 impl BuilderState for YaapDone {}
 
-
+#[derive(Debug)]
 pub struct Yaap<T: BuilderState> {
     argv: Vec<String>,
-    //free: LinkedList<usize>,
     free: Vec<bool>,
-    //args: Vec<Arg<()>>
-    //args: Vec<Arg<Box<
     errs: Vec<ArgError>,
+    args: Vec<Arg<()>>,
 
     // consider: only have a `desc` and a `help` member
     // have the user craft the `about` section themselves
@@ -65,6 +63,7 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
             argv: old.argv,
             free: old.free,
             errs: old.errs,
+            args: old.args,
             name: old.name,
             auth: old.auth,
             desc: old.desc,
@@ -82,6 +81,7 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
             argv: old.argv,
             free: old.free,
             errs: old.errs,
+            args: old.args,
             name: old.name,
             auth: old.auth,
             desc: old.desc,
@@ -92,6 +92,13 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
     }
 }
 
+// hack to shim args into a struct
+// otherwise end up with like `Vec<Box<ArgTrait<MatchType=ArgTraitTrait>>>>`
+//  and I think because ValType is generic it might be more complicated
+impl super::ArgTrait for () {
+    type MatchType = ();
+    fn matches(_: &Arg<Self>, _: &str) { unimplemented!() }
+}
 
 impl Yaap<YaapOpts> {
 
@@ -99,12 +106,13 @@ impl Yaap<YaapOpts> {
         let free = argv.iter().map(|a| !a.starts_with('-')).collect();
         Yaap {
             argv, free, name,
+            args: vec![],
             errs: vec![],
             auth: None,
             desc: None,
             vers: None,
             help: None,
-            state: YaapOpts
+            state: YaapOpts,
         }
     }
 
@@ -185,10 +193,19 @@ impl Yaap<YaapDone> {
         if !self.errs.is_empty() {
             panic!("Errors: {:?}", self.errs);
         } else {
+            println!("{:?}", self);
             self
         }
     }
 
     // TODO: getters
     // in case someone wants to see the help message or metadata / args / something
+
+    fn usage(&self) -> String {
+        if let Some(h) = self.help { 
+            h.to_owned()
+        } else {
+            unimplemented!()
+        }
+    }
 }

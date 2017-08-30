@@ -46,7 +46,7 @@ impl Yaap<YaapOpts> {
 
 impl Yaap<YaapArgs> {
 
-    pub fn extract_val<T>(mut self, result: &mut T, arg: Arg<ValArg<T>>) -> Self
+    pub fn extract_val<T>(mut self, result: &mut T, mut arg: Arg<ValArg<T>>) -> Self
         where T: FromStr + Default + Debug
     {
         // TODO: in the future this can just wrap `try_extract_val`
@@ -82,7 +82,7 @@ impl Yaap<YaapArgs> {
             }
         }
         if times_set == 0 {
-            if let Some(def) = arg.kind.default {
+            if let Some(def) = arg.kind.default.take() {
                 *result = def;
             } else {
                 self.errs.push(ArgError::MissingArg { long: arg.long });
@@ -90,11 +90,12 @@ impl Yaap<YaapArgs> {
         } else if times_set > 1 {
             self.errs.push(ArgError::Repetition { long: arg.long } );
         }
+        self.args.push(arg.strip_type());
         self
     }
 
     // optional value
-    pub fn try_extract_val<T>(mut self, result: &mut Option<T>, arg: Arg<ValArg<T>>)
+    pub fn try_extract_val<T>(mut self, result: &mut Option<T>, mut arg: Arg<ValArg<T>>)
         -> Self
         where T: FromStr + Default + Debug
     {
@@ -132,12 +133,13 @@ impl Yaap<YaapArgs> {
             }
         }
         if times_set == 0 {
-            if let Some(def) = arg.kind.default {
+            if let Some(def) = arg.kind.default.take() {
                 *result = Some(def);
             }
         } else if times_set > 1 {
             self.errs.push(ArgError::Repetition { long: arg.long } );
         }
+        self.args.push(arg.strip_type());
         self
     }
 }
