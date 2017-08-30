@@ -162,7 +162,9 @@ impl Yaap<YaapArgs> {
             if rest_are_free || is_free {
                 match arg.parse() {
                     Ok(t) => free.push(t),
-                    Err(_) => self.errs.push(ArgError::BadType),
+                    Err(_) => self.errs.push(ArgError::BadTypeFree {
+                        attempt: arg.to_owned(),
+                    }),
                 }
             } else if arg == "--" {
                 rest_are_free = true;

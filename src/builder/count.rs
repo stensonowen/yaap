@@ -49,7 +49,9 @@ impl Arg<CountArg> {
                 // `-v=8`
                 match s[3..].parse() {
                     Ok(n) => Ok(n),
-                    Err(_) => Err(ArgError::BadType)
+                    Err(_) => Err(ArgError::BadType {
+                        long: self.long, attempt: s.to_owned(),
+                    })
                 }
             } else {
                 // no match
@@ -71,7 +73,9 @@ impl Arg<CountArg> {
                 // `--long=5`
                 match s[i..].parse() {
                     Ok(n) => Ok(n),
-                    Err(_) => Err(ArgError::BadType)
+                    Err(_) => Err(ArgError::BadType {
+                        long: self.long, attempt: s.to_owned(),
+                    })
                 }
             } else {
                 Ok(0)

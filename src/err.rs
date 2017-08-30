@@ -2,43 +2,53 @@ use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum ArgError {
-    UnexpectedValue,    // flag given a value, e.g. `-v=9`
-    MissingValue,       // last argument expected a value
-    BadType,            // e.g. `--num false`
-    MissingArg,         // required argument omitted
-    Repetition,         // argument set multiple times unexpectedly
+    UnexpectedValue {
+        // flag given a value, e.g. `-v=9`
+        long: &'static str,
+        attempt: String,
+    },
+    MissingValue {
+        // last argument expected a value
+        long: &'static str,
+    },
+    BadType {
+        // e.g. `--num false`
+        long: &'static str,
+        attempt: String,
+    },
+    BadTypeFree {
+        // if a free arg is the wrong type
+        attempt: String,
+    },
+    MissingArg {
+        // required argument omitted
+        long: &'static str,
+    },
+    Repetition {
+        // argument set multiple times unexpectedly
+        long: &'static str,
+    }
 }
 
-//pub type ArgResult<T> = Result<T, ArgError>;
-
-#[derive(Debug)]
-struct BadArg {
-    long: &'static str,
-    //short: Option<char>,
-    attempt: String, // maybe be ref ? // only makes sense to have attempts sometimes
-    problem: ArgError,
-}
-
-impl BadArg {
-    //pub fn from(
-}
-
-impl fmt::Display for BadArg {
+impl fmt::Display for ArgError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ArgError::*;
-        match self.problem {
-            UnexpectedValue => 
+        match *self {
+            UnexpectedValue { long, ref attempt } => 
                 write!(f, "Flag `{}` cannot be set to a value (as in `{}`)",
-                       self.long, self.attempt),
-            MissingValue    => 
-                write!(f, "Option `{}` requires a value", self.long),
-            BadType         => 
+                       long, attempt),
+            MissingValue { long } => 
+                write!(f, "Option `{}` requires a value", long),
+            BadType { long, ref attempt } => 
                 write!(f, "Option `{}` expected type TODO (couldn't convert `{}`)",
-                       self.long, self.attempt),
-            MissingArg      => 
-                write!(f, "Missing required option `{}`", self.long),
-            Repetition      => 
-                write!(f, "Option `{}` cannot be set more than once", self.long),
+                       long, attempt),
+            BadTypeFree { ref attempt } => 
+                write!(f, "Free arg not the right type (couldn't convert `{}`)",
+                       attempt),
+            MissingArg { long } => 
+                write!(f, "Missing required option `{}`", long),
+            Repetition { long } => 
+                write!(f, "Option `{}` cannot be set more than once", long),
         }
     }
 }

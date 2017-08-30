@@ -61,7 +61,7 @@ impl Yaap<YaapArgs> {
                 ArgMatch2::NextArg => match self.argv.get(i+1) {
                     Some(next) => next,
                     None => { 
-                        self.errs.push(ArgError::MissingValue); 
+                        self.errs.push(ArgError::MissingValue { long: arg.long } );
                         self.free[i] = false;
                         continue 
                     }
@@ -75,7 +75,9 @@ impl Yaap<YaapArgs> {
                 },
                 Err(_) => {
                     // TODO: preserve type?
-                    self.errs.push(ArgError::BadType);
+                    self.errs.push(ArgError::BadType {
+                        long: arg.long, attempt: arg_str.to_owned()
+                    });
                 }
             }
         }
@@ -83,16 +85,17 @@ impl Yaap<YaapArgs> {
             if let Some(def) = arg.kind.default {
                 *result = def;
             } else {
-                self.errs.push(ArgError::MissingArg);
+                self.errs.push(ArgError::MissingArg { long: arg.long });
             }
         } else if times_set > 1 {
-            self.errs.push(ArgError::Repetition);
+            self.errs.push(ArgError::Repetition { long: arg.long } );
         }
         self
     }
 
     // optional value
-    pub fn try_extract_val<T>(mut self, result: &mut Option<T>, arg: Arg<ValArg<T>>) -> Self
+    pub fn try_extract_val<T>(mut self, result: &mut Option<T>, arg: Arg<ValArg<T>>)
+        -> Self
         where T: FromStr + Default + Debug
     {
         let mut times_set = 0usize;
@@ -107,7 +110,7 @@ impl Yaap<YaapArgs> {
                     if let Some(next) = self.argv.get(i+1) {
                         next
                     } else {
-                        self.errs.push(ArgError::MissingValue);
+                        self.errs.push(ArgError::MissingValue { long: arg.long } );
                         self.free[i] = false;
                         continue
                     }
@@ -121,7 +124,9 @@ impl Yaap<YaapArgs> {
                 },
                 Err(_) => {
                     // TODO: preserve type?
-                    self.errs.push(ArgError::BadType);
+                    self.errs.push(ArgError::BadType { 
+                        long: arg.long, attempt: arg_str.to_owned()
+                    });
                     continue
                 }
             }
@@ -131,7 +136,7 @@ impl Yaap<YaapArgs> {
                 *result = Some(def);
             }
         } else if times_set > 1 {
-            self.errs.push(ArgError::Repetition);
+            self.errs.push(ArgError::Repetition { long: arg.long } );
         }
         self
     }

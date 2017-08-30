@@ -16,7 +16,9 @@ impl ArgTrait for FlagArg {
         match either {
             ArgMatch2::NextArg => Ok(true),
             ArgMatch2::NoMatch => Ok(false),
-            ArgMatch2::AtOffset(_) => Err(ArgError::UnexpectedValue)
+            ArgMatch2::AtOffset(_) => Err(ArgError::UnexpectedValue { 
+                long: arg.long, attempt: s.to_owned()
+            })
         }
     }
 }

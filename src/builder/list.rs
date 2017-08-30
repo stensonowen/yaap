@@ -53,12 +53,14 @@ impl Yaap<YaapArgs> {
                         self.free[j] = false;
                         match elem.parse() {
                             Ok(e) => res_vec.push(e),
-                            Err(_) => self.errs.push(ArgError::BadType),
+                            Err(_) => self.errs.push(ArgError::BadType {
+                                long: arg.long, attempt: elem.to_owned()
+                            }),
                             // TODO: preserve type of `_`?
                         }
                     }
                 } else {
-                    self.errs.push(ArgError::MissingArg);
+                    self.errs.push(ArgError::MissingArg { long: arg.long });
                 }
             } else if let ArgMatch2::AtOffset(j) = matches {
                 // `--list=1,2,3,4`
@@ -66,7 +68,9 @@ impl Yaap<YaapArgs> {
                 for elem in a[j..].split(',') {
                     match elem.parse() {
                         Ok(e) => res_vec.push(e),
-                        Err(_) => self.errs.push(ArgError::BadType),
+                        Err(_) => self.errs.push(ArgError::BadType {
+                            long: arg.long, attempt: elem.to_owned(),
+                        }),
                         // TODO: preserve type of `_`?
                     }
                 }
