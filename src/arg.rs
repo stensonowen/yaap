@@ -93,41 +93,22 @@ impl Arg<ListArg> {
     }
 }
 
-//  s.begins_with('-',char)
-//  s.begins_with("--", "foo")
-
 use std::str::Chars;
 use std::iter;
 
 trait Begins {
-    //fn size(&self) -> usize;
     fn begins(&self, chars: &mut Chars) -> bool;
-    //fn equals(&self, chars: &mut Chars) -> bool;
 }
 
 impl Begins for char {
-    //fn size(&self) -> usize { 1 }
-    fn begins(&self, chars: &mut Chars) -> bool { chars.next() == Some(*self) }
-    //fn equals(&self, chars: &mut Chars) -> bool { chars.eq(iter::once(*self)) }
+    fn begins(&self, chars: &mut Chars) -> bool { Some(*self) == chars.next() }
 }
 
 impl<'a> Begins for &'a str {
-    //fn size(&self) -> usize { self.len() }
-    //c.as_str().len()>=self.len() && self.chars().zip(c).all(|(a,b)| a==b)
-    //fn begins(&self, c: &mut Chars) -> bool { c.as_str().starts_with(self) }
-    //fn equals(&self, c: &mut Chars) -> bool { c.as_str() == self }
-    //self.chars().eq(c)
-
     fn begins(&self, c: &mut Chars) -> bool { 
         c.as_str().len()>=self.len() && self.chars().zip(c).all(|(a,b)| a==b)
     }
 }
-
-impl Begins for () {
-    // just so we can opt to not use args or something idk
-    fn begins(&self, _: &mut Chars) -> bool { false }
-}
-
 
 trait BeginsWith {
     // easy to continue if you want
@@ -145,23 +126,16 @@ impl BeginsWith for str {
         let mut c = self.chars();
         a.begins(&mut c) && b.begins(&mut c)
     }
-    //jfn begins_wth_n<A,B,C,D,E>(&self, a: A, b: B, c: C, d: D, e: E) -> usize
-    //j    where A: Begins, B: Begins, C: Begins, D: Begins, E: Begins
-    //j{
     fn begins_with_n<A: Begins, B: Begins, C: Begins>(&self, a: A, b: B, c: C) -> usize {
         // not a great way to generalize this without a macro and boxed trait
         let mut chars = self.chars();
         if a.begins(&mut chars) == false {
-            //println!("ENDED WITH `{}`", chars.as_str());
             0
         } else if b.begins(&mut chars) == false {
-            //println!("ENDED WITH `{}`", chars.as_str());
             1
         } else if c.begins(&mut chars) == false {
-            //println!("ENDED WITH `{}`", chars.as_str());
             2
         } else {
-            //println!("ENDED WITH `{}`", chars.as_str());
             3
         }
     }
@@ -178,13 +152,7 @@ impl<T: ArgTrait> Arg<T> {
         }
     }
     fn long_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
-        //println!("   {:?}   {}   ", self, s);
-        //let x = s.begins_with_n("--", self.long, '=');
-        //println!("{}", "--x".begins_with_n("--",self.long,'='));
-        //println!("{}\t{}\t{}", s, x, self.long);
         match s.begins_with_n("--", self.long, '=') {
-        //let n = s.begins_with_n("--", self.long, '=');
-        //match n {
             3   => ArgMatch::Contained(&s[self.long.len()+3..]),
             2   => ArgMatch::Match,
             0|1 => ArgMatch::NoMatch,
