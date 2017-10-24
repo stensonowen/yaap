@@ -27,7 +27,7 @@ pub use arg::{Arg};
  *  If a user implements FromStr for Option<T> then will it be ill-defined
  *   how to treat it: whether it should be optional or whatever
  *
- *  Is '-' an invalid short character?
+ *  Is '-' an invalid short character? Can `=` be in a long name?
  */
 
 //struct Yaap(env::Args);
@@ -145,16 +145,16 @@ impl Yaap {
     pub fn count(self, result: &mut usize, arg: Arg<CountArg>) -> Self {
         let mut count = 0;
         for s in &self.argv {
-            if let Ok(n) = arg.matches(s) { 
-                count += n; 
-            }
+            //if let Ok(n) = arg.matches(s) { 
+            //    count += n; 
+            //}
         }
         *result = count;
         self
     }
 
     pub fn contains(self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
-        *result = self.argv.iter().any(|s| arg.matches(s));
+        // *result = self.argv.iter().any(|s| arg.matches(s));
         self
     }
 
