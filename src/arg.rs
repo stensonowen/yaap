@@ -1,10 +1,13 @@
 
 use std::fmt::Debug;
+use std::num::ParseIntError;
 
 pub trait ArgTrait : Debug {
+    type Match;
     fn from(long: &'static str, help: &'static str) -> Arg<Self> 
         where Self: Sized;
-    fn matches(arg: &Arg<Self>, s: &str) -> bool where Self: Sized;
+    //fn matches(arg: &Arg<Self>, s: &str) -> bool where Self: Sized;
+    fn matches(arg: &Arg<Self>, s: &str) -> Self::Match where Self: Sized;
 }
 
 #[derive(Debug)] pub struct FlagArg;
@@ -13,6 +16,7 @@ pub trait ArgTrait : Debug {
 #[derive(Debug)] pub struct ListArg { len: Option<usize> }
 
 impl ArgTrait for FlagArg {
+    type Match = bool;
     fn from(long: &'static str, help: &'static str) -> Arg<FlagArg> {
         Arg::<FlagArg>::new(long, help)
     }
@@ -22,15 +26,29 @@ impl ArgTrait for FlagArg {
 }
 
 impl ArgTrait for CountArg {
+    type Match = Result<usize, ParseIntError>;
     fn from(long: &'static str, help: &'static str) -> Arg<CountArg> {
         Arg::<CountArg>::new(long, help)
     }
-    fn matches(arg: &Arg<Self>, s: &str) -> bool {
-        arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
+    fn matches(arg: &Arg<Self>, s: &str) -> Self::Match {
+        if s.starts_with("--") && 
+            s[2..].matches(arg.long).count() * arg.long.len() == s.len()-2 {
+                Ok((s.len()-2) / arg.long.len())
+        } else if s.starts_with("-") && 
+            //arg.short.map(|c| s[1..].matches(c).count() == s.len()-1).unwrap_or(false) {
+            arg.short.map(|c| s.chars().skip(1).all(|i| i==c)).unwrap_or(false) {
+                Ok(s.len()-1)
+        } else if let ArgMatch::Contained(n) = arg.long_matches(s) {
+            n.parse()
+        } else {
+            Ok(0)
+        }
+        //arg.short_matches(s) || arg.long_matches(s) == ArgMatch::Match
     }
 }
 
 impl ArgTrait for ValArg {
+    type Match = bool;
     fn from(long: &'static str, help: &'static str) -> Arg<ValArg> {
         Arg::<ValArg>::new(long, help)
     }
@@ -40,6 +58,7 @@ impl ArgTrait for ValArg {
 }
 
 impl ArgTrait for ListArg {
+    type Match = bool;
     fn from(long: &'static str, help: &'static str) -> Arg<ListArg> {
         Arg::<ListArg>::new(long, help)
     }
@@ -72,7 +91,7 @@ impl Arg<CountArg> {
     fn new(long: &'static str, help: &'static str) -> Self {
         Arg::default(long, help, CountArg)
     }
-    pub(super) fn matches(&self, s: &str) -> bool {
+    pub(super) fn matches(&self, s: &str) -> Result<usize,ParseIntError> {
         CountArg::matches(self, s)
     }
 }

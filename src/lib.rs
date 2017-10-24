@@ -9,6 +9,7 @@ pub use arg::{Arg};
 
 /*
  * KEEP IN MIND
+ *
  *  stdin/stdout
  *      optional hyphen or something?
  *  positional args
@@ -25,6 +26,8 @@ pub use arg::{Arg};
  *
  *  If a user implements FromStr for Option<T> then will it be ill-defined
  *   how to treat it: whether it should be optional or whatever
+ *
+ *  Is '-' an invalid short character?
  */
 
 //struct Yaap(env::Args);
@@ -142,8 +145,8 @@ impl Yaap {
     pub fn count(self, result: &mut usize, arg: Arg<CountArg>) -> Self {
         let mut count = 0;
         for s in &self.argv {
-            if arg.matches(s) { 
-                count += 1; 
+            if let Ok(n) = arg.matches(s) { 
+                count += n; 
             }
         }
         *result = count;
@@ -151,13 +154,7 @@ impl Yaap {
     }
 
     pub fn contains(self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
-        *result = false;
-        for s in &self.argv {
-            if arg.matches(s) {
-                *result = true;
-                break;
-            }
-        }
+        *result = self.argv.iter().any(|s| arg.matches(s));
         self
     }
 
