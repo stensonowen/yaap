@@ -22,11 +22,14 @@ pub use arg::{Arg};
  *  if someone ever makes the same call twice it'll silently fail the second time
  *  there's no reason to do that
  *  maybe should change name to `pop`?
+ *
+ *  If a user implements FromStr for Option<T> then will it be ill-defined
+ *   how to treat it: whether it should be optional or whatever
  */
 
 //struct Yaap(env::Args);
 
-
+#[derive(Debug)]
 pub struct YaapBuilder {
     argv: env::Args,
     name: String,
@@ -100,6 +103,7 @@ impl YaapBuilder {
 
 }
 
+#[derive(Debug)]
 pub struct Yaap {
     //argv: env::Args,
     argv: Vec<String>,
