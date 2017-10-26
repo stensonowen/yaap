@@ -1,5 +1,5 @@
 
-use super::{Arg, ArgError};
+use super::{Arg, ArgMatch, ArgError};
 use std::{mem, env};
 use std::str::FromStr;
 
@@ -98,6 +98,12 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
 impl super::ArgTrait for () {
     type MatchType = ();
     fn matches(_: &Arg<Self>, _: &str) { unimplemented!() }
+    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+        unimplemented!()
+    }
+    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+        unimplemented!()
+    }
 }
 
 impl Yaap<YaapOpts> {

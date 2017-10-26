@@ -1,5 +1,5 @@
 use super::{Yaap, YaapOpts, YaapArgs, Arg};
-use super::super::{ArgTrait, ArgMatch2, ArgError};
+use super::super::{ArgTrait, ArgMatch, ArgMatch2, ArgError};
 use std::str::FromStr;
 use std::fmt::Debug;
 
@@ -16,6 +16,13 @@ impl<T: FromStr + Default + Debug> ArgTrait for ValArg<T> {
             ArgMatch2::NoMatch => arg.long_matches(s),
             sm => sm
         }
+    }
+
+    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+        unimplemented!()
+    }
+    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+        unimplemented!()
     }
 }
 

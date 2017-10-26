@@ -1,5 +1,6 @@
 use super::{Yaap, YaapOpts, YaapArgs, Arg};
-use super::super::{ArgTrait, ArgMatch2, ArgError};
+use super::super::{ArgResult, ArgTrait, ArgMatch, ArgMatch2, ArgError};
+use begin::BeginsWith;
 
 #[derive(Debug, Default)]
 pub struct CountArg;
@@ -8,9 +9,39 @@ impl ArgTrait for CountArg {
     type MatchType = Result<usize, ArgError>;
 
     fn matches(arg: &Arg<Self>, s: &str) -> Result<usize, ArgError> {
+    //fn matches(arg: &Arg<Self>, s: &str) -> usize {
+        //unimplemented!()
         match arg.short_matches_count(s) {
             Ok(0) => arg.long_matches_count(s),
             sm => sm
+        }
+    }
+
+    //fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgResult<ArgMatch<'a>> {
+    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+        // major difference:  fn("-ccc") -> Contains("ccc")
+        if let Some(c) = arg.short {
+            if s.begins_with_3('-', c, c) {
+                return ArgMatch::Contains(&s[1..])
+            }
+        }
+        arg.short_matches_(s).or_else(|| arg.long_matches_(s))
+    }
+
+    //fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
+    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+        // e.g. `-vvv`
+        if let Some(c) = arg.short {
+            if s.chars().all(|i| i==c) {
+                return Ok(s.len())
+            }
+        }
+        // e.g. `--long=18`
+        match s.parse() {
+            Ok(n) => Ok(n),
+            Err(e) => Err(ArgError::BadType {
+                long: arg.long, attempt: s.to_owned(),
+            })
         }
     }
 }

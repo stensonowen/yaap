@@ -3,7 +3,8 @@
 // Is that a good design pattern? It's verbose but it's safe
 // I don't think there's a tidier way to do the same thing
 
-pub use super::{ArgTrait, ArgMatch2};
+pub use super::{ArgTrait, ArgMatch, ArgMatch2};
+use begin::{Begins, BeginsWith, NumMatches};
 
 #[derive(Debug)]
 pub struct Arg<T: ArgTrait> {
@@ -41,6 +42,42 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
     pub(super) fn matches(&self, s: &str) -> M {
         T::matches(self, s)
     }
+
+
+
+
+    pub(super) fn short_matches_<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+        if let Some(c) = self.short {
+            self.begins_with(s, '-', c, '=')
+        } else {
+            ArgMatch::NoMatch
+        }
+    }
+
+    pub(super) fn long_matches_<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+        self.begins_with(s, "--", self.long, '=')
+    }
+
+    fn begins_with<'a, A, B, C>(&self, s: &'a str, a: A, b: B, c: C)
+        -> ArgMatch<'a> 
+        where A: Begins, B: Begins, C: Begins
+    {
+        let len = a.size() + b.size() + c.size();
+        match s.begins_with_n(a, b, c) {
+            NumMatches::Zero | NumMatches::One => ArgMatch::NoMatch,
+            NumMatches::Two   => {
+                if s.len() == len {
+                // only match if it's exact (e.g. don't match "--longfoo")
+                    ArgMatch::Match
+                } else {
+                    ArgMatch::NoMatch
+                }
+            },
+            NumMatches::Three => ArgMatch::Contains(&s[len..])
+        }
+    }
+
+
 
     pub(super) fn short_matches(&self, s: &str) -> ArgMatch2 {
         if let Some(c) = self.short {

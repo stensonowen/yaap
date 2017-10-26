@@ -1,5 +1,5 @@
 use super::{Yaap, YaapOpts, YaapArgs, Arg};
-use super::super::{ArgTrait, ArgMatch2, ArgError};
+use super::super::{ArgTrait, ArgMatch, ArgMatch2, ArgError};
 
 #[derive(Debug, Default)]
 pub struct FlagArg;
@@ -20,6 +20,21 @@ impl ArgTrait for FlagArg {
                 long: arg.long, attempt: s.to_owned()
             })
         }
+    }
+
+    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+        // should panic/complain on ArgMatch::Contain ?
+        if arg.short_matches_(s) == ArgMatch::Match {
+            ArgMatch::Match
+        } else if arg.long_matches_(s) == ArgMatch::Match {
+            ArgMatch::Match
+        } else {
+            ArgMatch::NoMatch
+        }
+    }
+    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+        // is this indicative of poor design?
+        unreachable!()
     }
 }
 

@@ -1,6 +1,9 @@
 
 mod test;
 
+pub mod begin;
+//use begin::{BeginsWith, NumMatches};
+
 pub mod arg;
 pub use arg::{Arg};
 
@@ -11,6 +14,35 @@ pub mod builder;
 pub use builder::Yaap;
 
 use std::fmt::Debug;
+
+pub type ArgResult<T> = Result<T, ArgError>;
+
+#[derive(Debug, PartialEq)]
+pub enum ArgMatch<'a> {
+    // the argument doesn't pertain to this string
+    NoMatch,
+
+    // the argument matches this string
+    // for List/Val this means the relevant data is in the next arg
+    // e.g. `--verbose` or `--std c99` (`--std` is the matched arg)
+
+    Match,      
+    // this string contains the argument and its value
+    // not relevant for Flag (which carries no data)
+    // e.g. in `-vvv` or `--std=c99` the last 3 chars are contained
+    Contains(&'a str),
+}
+
+impl<'a> ArgMatch<'a> {
+    // e.g. arg.short_matches(s).or_else(|| arg.long_matches(s))
+    //  less verbose and the closure is only computed if necessary
+    fn or_else<F: FnOnce()-> ArgMatch<'a>>(self, f: F) -> ArgMatch<'a> {
+        match self {
+            ArgMatch::NoMatch => f(),
+            _ => self
+        }
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub enum ArgMatch2 {
@@ -23,6 +55,11 @@ pub trait ArgTrait : Debug + Default {
     type MatchType;
 
     fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType;
+
+    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a>;
+    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType;
+    //fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgResult<ArgMatch<'a>>;
+    //fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType>;
 }
 
 //use std::str::FromStr;
