@@ -8,15 +8,6 @@ pub struct CountArg;
 impl ArgTrait for CountArg {
     type MatchType = usize;
 
-    /*
-    fn matches(arg: &Arg<Self>, s: &str) -> Result<usize, ArgError> {
-        match arg.short_matches_count(s) {
-            Ok(0) => arg.long_matches_count(s),
-            sm => sm
-        }
-    }
-    */
-
     fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
         // major difference:  fn("-ccc") -> Contains("ccc")
         if let Some(c) = arg.short {
@@ -24,7 +15,7 @@ impl ArgTrait for CountArg {
                 return ArgMatch::Contains(&s[1..])
             }
         }
-        arg.short_matches_(s).or_else(|| arg.long_matches_(s))
+        arg.short_matches(s).or_else(|| arg.long_matches(s))
     }
 
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {

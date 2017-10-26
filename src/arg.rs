@@ -3,7 +3,7 @@
 // Is that a good design pattern? It's verbose but it's safe
 // I don't think there's a tidier way to do the same thing
 
-pub use super::{ArgTrait, ArgMatch, ArgMatch2};
+pub use super::{ArgTrait, ArgResult, ArgMatch};
 use begin::{Begins, BeginsWith, NumMatches};
 
 #[derive(Debug)]
@@ -39,15 +39,16 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
         }
     }
 
-    pub(super) fn matches(&self, _: &str) -> M {
-        //T::matches(self, s)
-        unimplemented!()
+    pub(super) fn does_match<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+        T::does_match(self, s)
+    }
+
+    pub(super) fn extract_match(&self, arg: &Arg<T>, s: &str) -> ArgResult<M> {
+        T::extract_match(self, s)
     }
 
 
-
-
-    pub(super) fn short_matches_<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+    pub(super) fn short_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
         if let Some(c) = self.short {
             self.begins_with(s, '-', c, '=')
         } else {
@@ -55,7 +56,7 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
         }
     }
 
-    pub(super) fn long_matches_<'a>(&self, s: &'a str) -> ArgMatch<'a> {
+    pub(super) fn long_matches<'a>(&self, s: &'a str) -> ArgMatch<'a> {
         self.begins_with(s, "--", self.long, '=')
     }
 
@@ -63,51 +64,24 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
         -> ArgMatch<'a> 
         where A: Begins, B: Begins, C: Begins
     {
-        let len = a.size() + b.size() + c.size();
         match s.begins_with_n(a, b, c) {
             NumMatches::Zero | NumMatches::One => ArgMatch::NoMatch,
-            NumMatches::Two   => {
+            NumMatches::Two => {
+                let len = a.size() + b.size();
                 if s.len() == len {
-                // only match if it's exact (e.g. don't match "--longfoo")
+                    // only match if it's exact (e.g. don't match "--longfoo")
                     ArgMatch::Match
                 } else {
                     ArgMatch::NoMatch
                 }
             },
-            NumMatches::Three => ArgMatch::Contains(&s[len..])
-        }
-    }
-
-
-
-    pub(super) fn short_matches(&self, s: &str) -> ArgMatch2 {
-        if let Some(c) = self.short {
-            if s.len() == 2 && s.chars().zip(&['-',c]).all(|(a,&b)| a==b) {
-                ArgMatch2::NextArg
-            } else if s.len() > 2 && 
-                    s.chars().zip(&['-',c,'=']).all(|(a,&b)| a==b) {
-                ArgMatch2::AtOffset(3)
-            } else {
-                ArgMatch2::NoMatch
+            NumMatches::Three => {
+                let len = a.size() + b.size() + c.size();
+                ArgMatch::Contains(&s[len..])
             }
-        } else {
-            ArgMatch2::NoMatch
         }
     }
 
-    pub(super) fn long_matches(&self, s: &str) -> ArgMatch2 {
-        if s.starts_with("--") && s[2..].starts_with(self.long) {
-            if s.len() == 2 + self.long.len() {
-                ArgMatch2::NextArg
-            } else if let Some('=') = s.chars().nth(2 + self.long.len()) {
-                ArgMatch2::AtOffset(self.long.len()+3)
-            } else {
-                ArgMatch2::NoMatch
-            }
-        } else {
-            ArgMatch2::NoMatch
-        }
-    }
 
     // TODO: is this the nicest way to do the builder pattern?
     // is `Arg.foo().is_required(true)` better than `Arg.foo().is_required()`?

@@ -44,23 +44,13 @@ impl<'a> ArgMatch<'a> {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum ArgMatch2 {
-    NoMatch,
-    NextArg,
-    AtOffset(usize),
-}
-
 pub trait ArgTrait : Debug + Default {
     type MatchType;
 
-    //fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType;
-
     fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
-        arg.short_matches_(s).or_else(|| arg.long_matches_(s))
+        arg.short_matches(s).or_else(|| arg.long_matches(s))
     }
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType>;
-     // todo return ArgResult<MatchType> gotta change that
 }
 
 //use std::str::FromStr;

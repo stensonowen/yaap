@@ -40,11 +40,11 @@ mod test {
     #[test]
     fn count() {
         let mut c = 0;
-        Yaap::create_from(String::new(), own(vec!["-ccc", "-c=2", "--cc", "--c=5"]))
+        Yaap::create_from(String::new(), own(vec!["-ccc", "-c=2", "-c", "--c=5"]))
             .count(&mut c, Arg::from("c", "").with_short('c'))
             .finish();
 
-        assert_eq!(c, 12);
+        assert_eq!(c, 11);
     }
 
     #[test]

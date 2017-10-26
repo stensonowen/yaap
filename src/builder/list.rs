@@ -78,6 +78,66 @@ impl Yaap<YaapArgs> {
         -> Self
         where T: FromStr + Debug + Default
     {
+        assert!(result.is_empty());
+        let mut max_left = arg.kind.len.unwrap_or(self.argv.len());
+        let mut match_next = false;
+        assert_eq!(self.argv.len(), self.free.len());
+        for (s,free) in self.argv.iter().zip(self.free.iter_mut()) {
+            if max_left == 0 { 
+                break 
+            } else {
+                max_left -= 1;
+            }
+
+            // the string we should match on, if any
+            // can either be a substring of this arg or the whole thing
+            let arg_str: Option<&str> = if match_next {
+                // user will need to specify list arg each time
+                //  e.g. `--long 0 --long 1 --long=2`
+                //   (or just `--long=0,1,2,3,4`
+                match_next = false; // do?
+                Some(s)
+            } else {
+                match ListArg::does_match(&arg, s) {
+                    ArgMatch::Contains(ss) => {
+                        *free = true;
+                        match_next = false;
+                        Some(ss)
+                    },
+                    ArgMatch::Match => {
+                        *free = true;
+                        match_next = true;
+                        None
+                    },
+                    ArgMatch::NoMatch => {
+                        let err = ArgError::MissingArg { long: arg.long };
+                        self.errs.push(err);
+                        match_next = false;
+                        None
+                    },
+                }
+            };
+
+            // try to parse everything and place it into the result
+            if let Some(ss) = arg_str {
+                match ListArg::extract_match(&arg, ss) {
+                    Err(e) => self.errs.push(e),
+                    Ok(ListPart::ListDone) => continue,
+                    Ok(ListPart::ListElem(e)) => result.push(e),
+                    Ok(ListPart::ListWhole(ref mut v)) => result.append(v),
+                }
+            }
+        }
+
+        self.args.push(arg.strip_type());
+        self
+    }
+
+    /*
+    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg<T>>)
+        -> Self
+        where T: FromStr + Debug + Default
+    {
         let mut res_vec = vec![];
         for (i,a) in self.argv.iter().enumerate() {
             //match Arg<ListArg<T>>::does_match(&arg, s)
@@ -120,5 +180,6 @@ impl Yaap<YaapArgs> {
         self.args.push(arg.strip_type());
         self
     }
+    */
 
 }
