@@ -39,8 +39,9 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
         }
     }
 
-    pub(super) fn matches(&self, s: &str) -> M {
-        T::matches(self, s)
+    pub(super) fn matches(&self, _: &str) -> M {
+        //T::matches(self, s)
+        unimplemented!()
     }
 
 

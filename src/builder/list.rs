@@ -1,29 +1,59 @@
 use super::{Yaap, YaapOpts, YaapArgs, Arg};
-use super::super::{ArgTrait, ArgMatch, ArgMatch2, ArgError};
+use super::super::{ArgTrait, ArgResult, ArgMatch, ArgError};
 use std::str::FromStr;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 
 #[derive(Debug, Default)]
-pub struct ListArg { pub(super) len: Option<usize> }
+pub struct ListArg<T: FromStr + Default + Debug> { 
+    pub(super) len: Option<usize>,
+    phantom: PhantomData<T>,
+}
 
-impl ArgTrait for ListArg {
-    type MatchType = ArgMatch2;
+#[derive(Debug)]
+pub enum ListPart<T: FromStr + Default + Debug> {
+    ListElem(T),        // --list a b c d
+    ListWhole(Vec<T>),  // --list a,b,c,d
+    ListDone,
+}
 
-    fn matches(arg: &Arg<Self>, s: &str) -> ArgMatch2 {
-        match arg.short_matches(s) {
-            ArgMatch2::NoMatch => arg.long_matches(s),
-            sm => sm
+impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
+    type MatchType = ListPart<T>;
+
+    //fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+    //    unimplemented!()
+    //}
+
+    fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
+        // call this on each possible elem
+        if s.starts_with("--") {
+            // should do this? try to accomodate arg vals starting w `--`?
+            // should definitely be able to parse negative numbers
+            Ok(ListPart::ListDone)
+        } else if s.contains(',') {
+            let v: Result<Vec<T>, ArgError> = s.split(',').map(|i| 
+                match i.parse::<T>() {
+                    Ok(i) => Ok(i),
+                    Err(_) => Err(ArgError::BadType {
+                        long: arg.long, attempt: s.to_owned()
+                    })
+                }).collect();
+            match v {
+                Ok(v) => Ok(ListPart::ListWhole(v)),
+                Err(e) => Err(ArgError::BadType {
+                    long: arg.long, attempt: s.to_owned()
+                })
+            }
+        } else {
+            match s.parse() {
+                Ok(e) => Ok(ListPart::ListElem(e)),
+                Err(_) => Ok(ListPart::ListDone),
+            }
         }
-    }
-
-    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
-        unimplemented!()
-    }
-    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
-        unimplemented!()
     }
 }
 
-impl Arg<ListArg> {
+impl<T: FromStr + Default + Debug> Arg<ListArg<T>> {
     pub fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;
         self
@@ -32,9 +62,9 @@ impl Arg<ListArg> {
 
 impl Yaap<YaapOpts> {
 
-    pub fn extract_list<T>(self, result: &mut Vec<T>, arg: Arg<ListArg>) 
+    pub fn extract_list<T>(self, result: &mut Vec<T>, arg: Arg<ListArg<T>>) 
         -> Yaap<YaapArgs>
-        where T: FromStr
+        where T: FromStr + Debug + Default
     {
         let new: Yaap<YaapArgs> = self.into();
         new.extract_list(result, arg)
@@ -44,12 +74,14 @@ impl Yaap<YaapOpts> {
 
 impl Yaap<YaapArgs> {
 
-    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg>)
+    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg<T>>)
         -> Self
-        where T: FromStr
+        where T: FromStr + Debug + Default
     {
         let mut res_vec = vec![];
         for (i,a) in self.argv.iter().enumerate() {
+            //match Arg<ListArg<T>>::does_match(&arg, s)
+            /*
             let matches = arg.matches(a);
             if matches == ArgMatch2::NextArg {
                 // `--list 1, 2, 3, 4`
@@ -82,6 +114,7 @@ impl Yaap<YaapArgs> {
                     }
                 }
             } 
+            */
         }
         *result = res_vec;
         self.args.push(arg.strip_type());

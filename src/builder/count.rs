@@ -1,23 +1,22 @@
 use super::{Yaap, YaapOpts, YaapArgs, Arg};
-use super::super::{ArgResult, ArgTrait, ArgMatch, ArgMatch2, ArgError};
+use super::super::{ArgResult, ArgTrait, ArgMatch, ArgError};
 use begin::BeginsWith;
 
 #[derive(Debug, Default)]
 pub struct CountArg;
 
 impl ArgTrait for CountArg {
-    type MatchType = Result<usize, ArgError>;
+    type MatchType = usize;
 
+    /*
     fn matches(arg: &Arg<Self>, s: &str) -> Result<usize, ArgError> {
-    //fn matches(arg: &Arg<Self>, s: &str) -> usize {
-        //unimplemented!()
         match arg.short_matches_count(s) {
             Ok(0) => arg.long_matches_count(s),
             sm => sm
         }
     }
+    */
 
-    //fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgResult<ArgMatch<'a>> {
     fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
         // major difference:  fn("-ccc") -> Contains("ccc")
         if let Some(c) = arg.short {
@@ -28,8 +27,7 @@ impl ArgTrait for CountArg {
         arg.short_matches_(s).or_else(|| arg.long_matches_(s))
     }
 
-    //fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
-    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+    fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
         // e.g. `-vvv`
         if let Some(c) = arg.short {
             if s.chars().all(|i| i==c) {
@@ -37,12 +35,9 @@ impl ArgTrait for CountArg {
             }
         }
         // e.g. `--long=18`
-        match s.parse() {
-            Ok(n) => Ok(n),
-            Err(e) => Err(ArgError::BadType {
-                long: arg.long, attempt: s.to_owned(),
-            })
-        }
+        s.parse().map_err(|_| ArgError::BadType {
+            long: arg.long, attempt: s.to_owned()
+        })
     }
 }
 
@@ -58,9 +53,13 @@ impl Yaap<YaapArgs> {
     pub fn count(mut self, result: &mut usize, arg: Arg<CountArg>) -> Self {
         let mut count = 0;
         for s in &self.argv {
-            match arg.matches(s) {
-                Ok(n) => count += n,
-                Err(e) => self.errs.push(e),
+            match CountArg::does_match(&arg, s) {
+                ArgMatch::NoMatch => {},
+                ArgMatch::Match => count += 1,
+                ArgMatch::Contains(t) => match CountArg::extract_match(&arg, t) {
+                    Ok(n) => count += n,
+                    Err(e) => self.errs.push(e),
+                },
             }
         }
         *result = count;
@@ -69,8 +68,9 @@ impl Yaap<YaapArgs> {
     }
 }
 
+/*
 impl Arg<CountArg> {
-    fn short_matches_count(&self, s: &str) -> Result<usize, ArgError> { 
+    fn short_matches_count_(&self, s: &str) -> Result<usize, ArgError> { 
         if let Some(c) = self.short {
             let mut chars = s.chars();
             if chars.nth(0) == Some('-') && chars.all(|i| i==c) {
@@ -118,3 +118,4 @@ impl Arg<CountArg> {
         }
     }
 }
+*/

@@ -1,12 +1,14 @@
 use super::{Yaap, YaapOpts, YaapArgs, Arg};
-use super::super::{ArgTrait, ArgMatch, ArgMatch2, ArgError};
+use super::super::{ArgTrait, ArgResult, ArgMatch, ArgError};
 
 #[derive(Debug, Default)]
 pub struct FlagArg;
 
 impl ArgTrait for FlagArg {
-    type MatchType = Result<bool, ArgError>;
+    //type MatchType = Result<bool, ArgError>;
+    type MatchType = bool;
 
+    /*
     fn matches(arg: &Arg<Self>, s: &str) -> Result<bool, ArgError> {
         // `-f=...` is an error
         let either = match arg.short_matches(s) {
@@ -21,18 +23,13 @@ impl ArgTrait for FlagArg {
             })
         }
     }
+    */
 
-    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
-        // should panic/complain on ArgMatch::Contain ?
-        if arg.short_matches_(s) == ArgMatch::Match {
-            ArgMatch::Match
-        } else if arg.long_matches_(s) == ArgMatch::Match {
-            ArgMatch::Match
-        } else {
-            ArgMatch::NoMatch
-        }
-    }
-    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType {
+    //fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+    //    // TODO gotta check for ArgMatch::Contains in callee0
+    //    arg.short_matches_(s).or_else(|| arg.long_matches_(s))
+    //}
+    fn extract_match(_: &Arg<Self>, _: &str) -> ArgResult<Self::MatchType> {
         // is this indicative of poor design?
         unreachable!()
     }
@@ -49,16 +46,18 @@ impl Yaap<YaapArgs> {
     pub fn contains(mut self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
         // TODO verify only one exists ?
         *result = false;
-        for s in &self.argv {
-            match arg.matches(s) {
-                Ok(true) => {
-                    *result = true;
-                    break
-                },
-                Ok(false) => continue,
-                Err(e) => self.errs.push(e),
-            }
-        }
+        let mut errs = vec![];
+        *result = self.argv.iter().map(|s| match FlagArg::does_match(&arg, s) {
+            ArgMatch::Match => true,
+            ArgMatch::NoMatch => false,
+            ArgMatch::Contains(_) => {
+                errs.push(ArgError::UnexpectedValue {
+                    long: arg.long, attempt: s.to_owned()
+                });
+                false
+            },
+        }).any(|x|x);
+        self.errs.append(&mut errs);
         self.args.push(arg.strip_type());
         self
     }

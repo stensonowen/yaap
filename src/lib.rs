@@ -54,16 +54,19 @@ pub enum ArgMatch2 {
 pub trait ArgTrait : Debug + Default {
     type MatchType;
 
-    fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType;
+    //fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType;
 
-    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a>;
-    fn extract_match(arg: &Arg<Self>, s: &str) -> Self::MatchType;
-    //fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgResult<ArgMatch<'a>>;
-    //fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType>;
+    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+        arg.short_matches_(s).or_else(|| arg.long_matches_(s))
+    }
+    fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType>;
+     // todo return ArgResult<MatchType> gotta change that
 }
 
 //use std::str::FromStr;
 //pub trait Parsable : Debug + FromStr { }
+
+// uhhhh can I do something like --list=1 --list=2 --list=3 ?
 
 /*
  * KEEP IN MIND
