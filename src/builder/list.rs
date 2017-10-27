@@ -20,10 +20,6 @@ pub enum ListPart<T: FromStr + Default + Debug> {
 impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
     type MatchType = ListPart<T>;
 
-    //fn matches(arg: &Arg<Self>, s: &str) -> Self::MatchType {
-    //    unimplemented!()
-    //}
-
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
         // call this on each possible elem
         if s.starts_with("--") {
@@ -40,7 +36,7 @@ impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
                 }).collect();
             match v {
                 Ok(v) => Ok(ListPart::ListWhole(v)),
-                Err(e) => Err(ArgError::BadType {
+                Err(_) => Err(ArgError::BadType {
                     long: arg.long, attempt: s.to_owned()
                 })
             }
@@ -72,6 +68,22 @@ impl Yaap<YaapOpts> {
 
 }
 
+/*
+#[derive(Debug, PartialEq)]
+enum UseNextArg {
+    Must,
+    Can,
+    Cannot,
+}
+
+#[derive(Debug, PartialEq)]
+enum ListHistory {
+    Zero,
+    One,
+    Many,
+}
+*/
+
 impl Yaap<YaapArgs> {
 
     pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg<T>>)
@@ -82,20 +94,21 @@ impl Yaap<YaapArgs> {
         let mut max_left = arg.kind.len.unwrap_or(self.argv.len());
         let mut match_next = false;
         assert_eq!(self.argv.len(), self.free.len());
-        for (s,free) in self.argv.iter().zip(self.free.iter_mut()) {
+        //for (s,free) in self.argv.iter().zip(self.free.iter_mut()) {
+        for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
             if max_left == 0 { 
                 break 
             } else {
                 max_left -= 1;
             }
-
             // the string we should match on, if any
             // can either be a substring of this arg or the whole thing
             let arg_str: Option<&str> = if match_next {
                 // user will need to specify list arg each time
                 //  e.g. `--long 0 --long 1 --long=2`
                 //   (or just `--long=0,1,2,3,4`
-                match_next = false; // do?
+                match_next = false;
+                *free = false;
                 Some(s)
             } else {
                 match ListArg::does_match(&arg, s) {
@@ -105,7 +118,7 @@ impl Yaap<YaapArgs> {
                         Some(ss)
                     },
                     ArgMatch::Match => {
-                        *free = true;
+                        *free = false;
                         match_next = true;
                         None
                     },
@@ -120,7 +133,7 @@ impl Yaap<YaapArgs> {
 
             // try to parse everything and place it into the result
             if let Some(ss) = arg_str {
-                match ListArg::extract_match(&arg, ss) {
+                match arg.extract_match(ss) {
                     Err(e) => self.errs.push(e),
                     Ok(ListPart::ListDone) => continue,
                     Ok(ListPart::ListElem(e)) => result.push(e),
@@ -128,6 +141,11 @@ impl Yaap<YaapArgs> {
                 }
             }
         }
+
+        //if match_next {
+        //    let err = ArgError::UnexpectedValue {
+        //        long: arg.long, attempt: 
+        //}
 
         self.args.push(arg.strip_type());
         self

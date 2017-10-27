@@ -13,6 +13,13 @@ impl ArgTrait for FlagArg {
     }
 }
 
+impl Arg<FlagArg> {
+    pub(super) fn help() -> Self {
+        Self::from("help", "Print this message")
+            .with_short('h')
+    }
+}
+
 impl Yaap<YaapOpts> {
     pub fn contains(self, result: &mut bool, arg: Arg<FlagArg>) -> Yaap<YaapArgs> {
         let new: Yaap<YaapArgs> = self.into();
@@ -25,7 +32,8 @@ impl Yaap<YaapArgs> {
         // TODO verify only one exists ?
         *result = false;
         let mut errs = vec![];
-        *result = self.argv.iter().map(|s| match arg.does_match(s) {
+        //*result = self.argv.iter().map(|s| match arg.does_match(s) {
+        *result = Self::args(&self.argv).map(|s| match arg.does_match(s) {
             ArgMatch::Match => true,
             ArgMatch::NoMatch => false,
             ArgMatch::Contains(_) => {

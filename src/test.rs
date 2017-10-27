@@ -28,6 +28,17 @@ mod test {
     }
 
     #[test]
+    fn list() {
+        let mut v: Vec<i8> = vec![];
+        Yaap::create_from(String::new(), own(vec!["--ll", "0", "--ll", "-1"]))
+            .extract_list(&mut v, Arg::from("ll", "help"))
+            .finish();
+
+        assert_eq!(2, v.len());
+        assert_eq!(-1i8, v.iter().sum());
+    }
+
+    #[test]
     fn flag() {
         let mut b = false;
         Yaap::create_from(String::new(), own(vec!["--b"]))
@@ -57,6 +68,14 @@ mod test {
         assert_eq!(free.len(), 5);
     }
 
+    //#[test]
+    //fn help() {
+    //    struct Args {
+    //        a: bool,
+    //        //b: 
+    //        b: Vec<i8>,
+    //        c: 
+    //}
 
 }
 

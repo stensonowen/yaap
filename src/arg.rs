@@ -43,7 +43,7 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
         T::does_match(self, s)
     }
 
-    pub(super) fn extract_match(&self, arg: &Arg<T>, s: &str) -> ArgResult<M> {
+    pub(super) fn extract_match(&self, s: &str) -> ArgResult<M> {
         T::extract_match(self, s)
     }
 

@@ -1,6 +1,6 @@
 
 use super::{Arg, ArgResult, ArgMatch, ArgError};
-use std::{mem, env};
+use std::{mem, env, iter};
 use std::str::FromStr;
 
 mod flag;
@@ -98,11 +98,21 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
 impl super::ArgTrait for () {
     type MatchType = ();
     //fn matches(_: &Arg<Self>, _: &str) { unimplemented!() }
-    fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
+    fn does_match<'a>(_: &Arg<Self>, _: &'a str) -> ArgMatch<'a> {
         unimplemented!()
     }
-    fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
+    fn extract_match(_: &Arg<Self>, _: &str) -> ArgResult<Self::MatchType> {
         unimplemented!()
+    }
+}
+
+impl<T: BuilderState> Yaap<T> {
+    fn args<'a>(args: &'a Vec<String>) -> Box<Iterator<Item=&'a str>+'a> {
+        Box::new(args.iter()
+                 .map(String::as_ref)
+                 //.skip(1)
+                 .take_while(|&a| a != "--")
+                 )
     }
 }
 
@@ -170,9 +180,11 @@ impl Yaap<YaapArgs> {
         // that way it wouldn't be present in `Yaap<YaapDone>`, which would 
         //  mean these free args don't need to be cloned
         // ehhh, not particularly great either way
+        /*
         let mut free = vec![];
         let mut rest_are_free = false;
         for (arg, &is_free) in self.argv.iter().zip(self.free.iter()) {
+            // when would is_free be false but we should still use the arg?
             if rest_are_free || is_free {
                 match arg.parse() {
                     Ok(t) => free.push(t),
@@ -185,11 +197,31 @@ impl Yaap<YaapArgs> {
             }
         }
         *result = free;
+        */
+        for (arg,free) in self.argv.iter().zip(self.free.iter_mut())
+            .filter(|&(_, &mut f)| f) 
+        {
+            // assume `--` is not a `free` arg
+            match arg.parse() {
+                Ok(t) => result.push(t),
+                Err(_) => self.errs.push(ArgError::BadTypeFree {
+                    attempt: arg.to_owned()
+                })
+            }
+            *free = false;
+        }
+
         self.into()
     }
 
-    pub fn finish(self) -> Yaap<YaapDone> {
+    pub fn finish(mut self) -> Yaap<YaapDone> {
+        let mut invokes_help = false;
+        self = self.contains(&mut invokes_help, Arg::help());
         let new: Yaap<YaapDone> = self.into();
+        if invokes_help {
+            let usage = new.usage();
+            panic!("{}", usage);
+        }
         new.finish()
     }
 }
@@ -198,6 +230,11 @@ impl Yaap<YaapDone> {
     pub fn finish(self) -> Yaap<YaapDone> {
         if !self.errs.is_empty() {
             panic!("Errors: {:?}", self.errs);
+        } else if self.free.iter().any(|&x|x) {
+            let free: Vec<_> = self.free.iter().zip(self.argv.iter())
+                .filter_map(|(&f,a)| if f { Some(a) } else { None })
+                .collect();
+            panic!("Unclaimed free args: {:?}", free);
         } else {
             println!("{:?}", self);
             self
@@ -211,22 +248,19 @@ impl Yaap<YaapDone> {
         if let Some(h) = self.help { 
             h.to_owned()
         } else {
-            let mut s = format!("{}{}
-Usage: {} [OPTIONS] [FREE ARGS ?]
-
-Options:
-",
-                self.desc.unwrap_or(""), 
-                if self.desc.is_some() { "\n\n" } else { "" },
-                self.name, // if self.has_free
-                );
+            let mut s = format!("{}{} \nUsage: {} [OPTIONS] [FREE ARGS ?] \
+                                \nOptions: \n", self.desc.unwrap_or(""), 
+                                if self.desc.is_some() { "\n\n" } else { "" }, 
+                                self.name, // if self.has_free
+                                );
             let help_arg = Arg::from("--help", "Display this message")
                 .with_short('h');
             let max_arg_len = self.args.iter().fold("help".len(), |acc, arg| {
                 ::std::cmp::max(acc, arg.long.len())
             });
+            //let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
             let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
-            for arg in vec![help_arg].iter().chain(self.args.iter()) { 
+            for arg in iter::once(&help_arg).chain(self.args.iter()) {
                 let mut len = 0;
                 let mut arg_s = String::from("\t");
                 // short

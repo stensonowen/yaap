@@ -43,11 +43,11 @@ impl Yaap<YaapOpts> {
 impl Yaap<YaapArgs> {
     pub fn count(mut self, result: &mut usize, arg: Arg<CountArg>) -> Self {
         let mut count = 0;
-        for s in &self.argv {
+        for s in Self::args(&self.argv) {
             match CountArg::does_match(&arg, s) {
                 ArgMatch::NoMatch => {},
                 ArgMatch::Match => count += 1,
-                ArgMatch::Contains(t) => match CountArg::extract_match(&arg, t) {
+                ArgMatch::Contains(t) => match arg.extract_match(t) {
                     Ok(n) => count += n,
                     Err(e) => self.errs.push(e),
                 },

@@ -50,31 +50,36 @@ impl Yaap<YaapArgs> {
         where T: FromStr + Default + Debug
     {
         let mut times_set = 0usize;
+        let mut next_match = false;
         // can't use `.windows()` here because might be missing last argument
         assert_eq!(self.argv.len(), self.free.len());
-        for (i,(s,free)) in self.argv.iter().zip(self.free.iter_mut()).enumerate() {
+        for (s,free) in Self::args(&self.argv)
+            .zip(self.free.iter_mut())
+        {
             // the text of the arg value: either `--long=X` or `--long X`
-            let arg_str = match ValArg::does_match(&arg, s) {
-                ArgMatch::Contains(s) => s,
-                ArgMatch::NoMatch => continue,
-                ArgMatch::Match => match self.argv.get(i+1) {
-                    Some(next) => next,
-                    None => { 
-                        self.errs.push(ArgError::MissingValue { long: arg.long } );
-                        // not need to handle free vars? irrecoverable, right?
-                        //*free = false;
-                        continue 
-                    }
-                },
+            let arg_str: Option<&str> = if next_match {
+                next_match = false;
+                Some(s)
+            } else {
+                match ValArg::does_match(&arg, s) {
+                    ArgMatch::Contains(s) => Some(s),
+                    ArgMatch::NoMatch => None,
+                    ArgMatch::Match => {
+                        next_match = true;
+                        None
+                    },
+                }
             };
-            *free = false;
-            match ValArg::extract_match(&arg, arg_str) {
-                Ok(arg_val) => {
-                    *result = arg_val;
-                    times_set += 1;
-                },
-                Err(e) => self.errs.push(e),
-            };
+            if let Some(ss) = arg_str {
+                *free = false;
+                match arg.extract_match(ss) {
+                    Ok(arg_val) => {
+                        *result = arg_val;
+                        times_set += 1;
+                    },
+                    Err(e) => self.errs.push(e),
+                };
+            }
         }
         times_set
     }

@@ -103,6 +103,9 @@ pub trait ArgTrait : Debug + Default {
  * unit tests
  *
  * perf??
+ *
+ * use generic that allows for osstring internally?
+ *  could use env::args_os() to allow invalid unicode args
  */
 
 
