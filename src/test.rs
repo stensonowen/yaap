@@ -68,14 +68,33 @@ mod test {
         assert_eq!(free.len(), 5);
     }
 
-    //#[test]
-    //fn help() {
-    //    struct Args {
-    //        a: bool,
-    //        //b: 
-    //        b: Vec<i8>,
-    //        c: 
-    //}
+    #[test]
+    fn misc() {
+        #[derive(Debug)]
+        struct Args {
+            a: bool,        // flag
+            b: usize,       // count
+            g: u64,         // val
+            d: Vec<i8>,     // list
+            e: Option<bool>,// 
+        }
+        let mut args: Args = unsafe { ::std::mem::zeroed() };
+        //let input = "-a --d 1 -b=42 --d=0 --g 6969420 -d=-1"
+        //let input = "-a --d 1 -b=42 --d 0 --g 6969420 --d -1"
+        //let input = "--g=1234567890 --d = --d 1";
+        //let input = "--g=-1 -d 0 --d 1"; // both work
+        let input = "--g=-1 -d=0 --d=1"; // both don't
+        //let input = "-g=666";
+        //let input = "-a -b=42 --g 6969420 --e false".split(' ').collect();
+        Yaap::create_from(String::new(), own(input.split(' ').collect()))
+            .contains(       &mut args.a, Arg::from("a", "alpha").with_short('a'))
+            .count(          &mut args.b, Arg::from("b", "beta") .with_short('b'))
+            .extract_val(    &mut args.g, Arg::from("g", "gamma").with_short('g'))
+            .try_extract_val(&mut args.e, Arg::from("e", "epsilon"))
+            .extract_list(   &mut args.d, Arg::from("d", "delta").with_short('d'))
+            .finish();
+        println!("args: {:?}", args);
+    }
 
 }
 

@@ -236,7 +236,7 @@ impl Yaap<YaapDone> {
                 .collect();
             panic!("Unclaimed free args: {:?}", free);
         } else {
-            println!("{:?}", self);
+            //println!("{:?}", self);
             self
         }
     }

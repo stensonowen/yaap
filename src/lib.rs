@@ -106,6 +106,8 @@ pub trait ArgTrait : Debug + Default {
  *
  * use generic that allows for osstring internally?
  *  could use env::args_os() to allow invalid unicode args
+ *
+ * Single hyphen? like as in `vim -`? Not possible currently, right?
  */
 
 

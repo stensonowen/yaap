@@ -96,6 +96,7 @@ impl Yaap<YaapArgs> {
         assert_eq!(self.argv.len(), self.free.len());
         //for (s,free) in self.argv.iter().zip(self.free.iter_mut()) {
         for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
+            //println!("BEGINNING: {}, match_next: {}", s, match_next);
             if max_left == 0 { 
                 break 
             } else {
@@ -113,6 +114,8 @@ impl Yaap<YaapArgs> {
             } else {
                 match ListArg::does_match(&arg, s) {
                     ArgMatch::Contains(ss) => {
+                        // THE BUG IS HERE/
+                        println!("HERE I AM DAD `{}`", ss);
                         *free = true;
                         match_next = false;
                         Some(ss)
@@ -123,8 +126,10 @@ impl Yaap<YaapArgs> {
                         None
                     },
                     ArgMatch::NoMatch => {
-                        let err = ArgError::MissingArg { long: arg.long };
-                        self.errs.push(err);
+                        //println!("HERE I AM DAD");
+                        // why would this be an error?
+                        //let err = ArgError::MissingArg { long: arg.long };
+                        //self.errs.push(err);
                         match_next = false;
                         None
                     },
