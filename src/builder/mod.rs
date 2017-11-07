@@ -26,6 +26,9 @@ pub struct Yaap<T: BuilderState> {
     errs: Vec<ArgError>,
     args: Vec<Arg<()>>,
 
+    // an argv entry is `free` if it has been unclaimed by an argument object
+    // all argv's start out free; argv[i] can be set to false but not true 
+
     // consider: only have a `desc` and a `help` member
     // have the user craft the `about` section themselves
     // but then if they want the binary name they'll have pop it off argv
@@ -119,7 +122,8 @@ impl<T: BuilderState> Yaap<T> {
 impl Yaap<YaapOpts> {
 
     pub fn create_from(name: String, argv: Vec<String>) -> Yaap<YaapOpts> {
-        let free = argv.iter().map(|a| !a.starts_with('-')).collect();
+        //let free = argv.iter().map(|a| !a.starts_with('-')).collect(); // all be true
+        let free = argv.iter().map(|_| true).collect();
         Yaap {
             argv, free, name,
             args: vec![],

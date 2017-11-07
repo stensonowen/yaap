@@ -114,9 +114,7 @@ impl Yaap<YaapArgs> {
             } else {
                 match ListArg::does_match(&arg, s) {
                     ArgMatch::Contains(ss) => {
-                        // THE BUG IS HERE/
-                        println!("HERE I AM DAD `{}`", ss);
-                        *free = true;
+                        *free = false;
                         match_next = false;
                         Some(ss)
                     },
@@ -126,10 +124,9 @@ impl Yaap<YaapArgs> {
                         None
                     },
                     ArgMatch::NoMatch => {
-                        //println!("HERE I AM DAD");
-                        // why would this be an error?
                         //let err = ArgError::MissingArg { long: arg.long };
                         //self.errs.push(err);
+                        //*free = true;
                         match_next = false;
                         None
                     },
