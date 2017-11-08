@@ -25,8 +25,8 @@ pub enum ArgMatch<'a> {
     // the argument matches this string
     // for List/Val this means the relevant data is in the next arg
     // e.g. `--verbose` or `--std c99` (`--std` is the matched arg)
-
     Match,      
+
     // this string contains the argument and its value
     // not relevant for Flag (which carries no data)
     // e.g. in `-vvv` or `--std=c99` the last 3 chars are contained
@@ -108,10 +108,22 @@ pub trait ArgTrait : Debug + Default {
  *  could use env::args_os() to allow invalid unicode args
  *
  * Single hyphen? like as in `vim -`? Not possible currently, right?
+ *
+ * Subcommands?
+ *  Like cargo build --help or whatever? What's the best way to do this?
+ *      Maybe a fifth ArgTrait implementor? That can recognize an enum and
+ *          steals the remainder of the arguments?
+ *      Maybe a way to nest YaapBuilders? That would be kinda cool but might 
+ *          not work
+ *
+ *  Better naming convention?
+ *      Args passed by the user (e.g. `./a.out arg1 arg2 arg3`) arg ArgS (ArgStr)
+ *      Args constructed by the dev (e.g. `Arg::from(..)` are ArgM (ArgMatch)
+ *          public type alias called `Arg` for benefit of users
  */
 
 
 // use state machine to verify calls are made in the right order
-// 1. set yaap options (e.g. `name`, `help`, ...
-// 2. extract options (e.g. `contains`, `extract_list`, ...
+// 1. set yaap options (e.g. `name`, `help`, ...)
+// 2. extract options (e.g. `contains`, `extract_list`, ...)
 // 3. collect free arguments

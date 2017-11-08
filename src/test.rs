@@ -85,9 +85,9 @@ mod test {
         //let input = "--g=-1 -d 0 --d 1"; // both work
         //let input = "--g=-1 -d=0 --d=1"; // both don't
         //let input = "-g=666";
-        let input = "-d=0 -g=666 --d=1";
+        //let input = "-d=0 -g=666 --d=1";
         //let input = "--d = -d -1 -d=-2 -d=1 --d=0";
-        //let input = "--d = "; // wtf
+        let input = "-g=0 --d 1"; // wtf
         //let input = "-a -b=42 --g 6969420 --e false".split(' ').collect();
         Yaap::create_from(String::new(), own(input.split(' ').collect()))
             .contains(       &mut args.a, Arg::from("a", "alpha").with_short('a'))

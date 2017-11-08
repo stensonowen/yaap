@@ -58,21 +58,17 @@ impl Yaap<YaapArgs> {
         {
             // the text of the arg value: either `--long=X` or `--long X`
             let arg_str: Option<&str> = if next_match {
-                *free = false;
                 next_match = false;
                 Some(s)
             } else {
                 match ValArg::does_match(&arg, s) {
                     ArgMatch::NoMatch => None,
-                    ArgMatch::Contains(s) => {
-                        *free = false;
-                        Some(s)
-                    },
-                    ArgMatch::Match => {
-                        *free = false;
-                        next_match = true;
-                        None
-                    },
+                    ArgMatch::Contains(s) => Some(s),
+                    ArgMatch::Match => { 
+                        *free = false; 
+                        next_match = true; 
+                        None 
+                    }
                 }
             };
             if let Some(ss) = arg_str {

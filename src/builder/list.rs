@@ -14,7 +14,7 @@ pub struct ListArg<T: FromStr + Default + Debug> {
 pub enum ListPart<T: FromStr + Default + Debug> {
     ListElem(T),        // --list a b c d
     ListWhole(Vec<T>),  // --list a,b,c,d
-    ListDone,
+    //ListDone,
 }
 
 impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
@@ -25,7 +25,8 @@ impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
         if s.starts_with("--") {
             // should do this? try to accomodate arg vals starting w `--`?
             // should definitely be able to parse negative numbers
-            Ok(ListPart::ListDone)
+            // Ok(ListPart::ListDone)
+            Err(ArgError::MissingValue { long: arg.long })
         } else if s.contains(',') {
             let v: Result<Vec<T>, ArgError> = s.split(',').map(|i| 
                 match i.parse::<T>() {
@@ -41,9 +42,11 @@ impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
                 })
             }
         } else {
-            match s.parse() {
+            match s.parse::<T>() {
                 Ok(e) => Ok(ListPart::ListElem(e)),
-                Err(_) => Ok(ListPart::ListDone),
+                Err(_) => Err(ArgError::BadType {
+                    long: arg.long, attempt: s.to_owned()
+                })
             }
         }
     }
@@ -135,9 +138,9 @@ impl Yaap<YaapArgs> {
 
             // try to parse everything and place it into the result
             if let Some(ss) = arg_str {
+                println!("xxx: {:?}", ss);
                 match arg.extract_match(ss) {
                     Err(e) => self.errs.push(e),
-                    Ok(ListPart::ListDone) => continue,
                     Ok(ListPart::ListElem(e)) => result.push(e),
                     Ok(ListPart::ListWhole(ref mut v)) => result.append(v),
                 }
