@@ -102,8 +102,12 @@ pub trait ArgTrait : Debug + Default {
  *
  * use generic that allows for osstring internally?
  *  could use env::args_os() to allow invalid unicode args
+ *  would this severely complicate string comparisons?
  *
  * Single hyphen? like as in `vim -`? Not possible currently, right?
+ *  A dedicated arg type? Like {FlagArg,ListArg,etc.? HyphenArg?)
+ *  Is there a clean way to make it just a FlagArg?
+ *      Make FlagArg generic over Option? Need a None, right?
  *
  * Subcommands?
  *  Like cargo build --help or whatever? What's the best way to do this?
@@ -116,6 +120,7 @@ pub trait ArgTrait : Debug + Default {
  *      Args passed by the user (e.g. `./a.out arg1 arg2 arg3`) arg ArgS (ArgStr)
  *      Args constructed by the dev (e.g. `Arg::from(..)` are ArgM (ArgMatch)
  *          public type alias called `Arg` for benefit of users
+ *      DONE
  *
  *  Add a --version/-V option like --help/-h ?
  *

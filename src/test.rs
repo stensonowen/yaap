@@ -132,6 +132,16 @@ mod test {
     }
 
     #[test]
+    fn gnu_cp() {
+        let mut args: Vec<String> = vec![];
+        let input = "src1 src2 src3 dst";
+        Yaap::create_from(String::new(), own(input.split(' ').collect()))
+            .collect_free_args(&mut args)
+            .finish();
+        assert_eq!(args.iter().collect::<Vec<_>>(), vec!["src1","src2","src3","dst"]);
+    }
+
+    #[test]
     #[should_panic]
     fn forgot_to_finish_1() {
         let mut b = false;
