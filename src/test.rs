@@ -69,26 +69,17 @@ mod test {
     }
 
     #[test]
-    fn misc() {
-        #[derive(Debug)]
+    fn app1() {
+        #[derive(Debug, PartialEq)]
         struct Args {
             a: bool,        // flag
             b: usize,       // count
             g: u64,         // val
             d: Vec<i8>,     // list
-            e: Option<bool>,// 
+            e: Option<bool>,// omitted (use a `try_` fn)
         }
         let mut args: Args = unsafe { ::std::mem::zeroed() };
-        //let input = "-a --d 1 -b=42 --d=0 --g 6969420 -d=-1"
-        //let input = "-a --d 1 -b=42 --d 0 --g 6969420 --d -1"
-        //let input = "--g=1234567890 --d = --d 1";
-        //let input = "--g=-1 -d 0 --d 1"; // both work
-        //let input = "--g=-1 -d=0 --d=1"; // both don't
-        //let input = "-g=666";
-        //let input = "-d=0 -g=666 --d=1";
-        //let input = "--d = -d -1 -d=-2 -d=1 --d=0";
-        let input = "-g=0 --d 1"; // wtf
-        //let input = "-a -b=42 --g 6969420 --e false".split(' ').collect();
+        let input = "-a --d 1 -b=42 --d=0 --g 6969420 -d=-1";
         Yaap::create_from(String::new(), own(input.split(' ').collect()))
             .contains(       &mut args.a, Arg::from("a", "alpha").with_short('a'))
             .count(          &mut args.b, Arg::from("b", "beta") .with_short('b'))
@@ -96,8 +87,58 @@ mod test {
             .try_extract_val(&mut args.e, Arg::from("e", "epsilon"))
             .extract_list(   &mut args.d, Arg::from("d", "delta").with_short('d'))
             .finish();
-        println!("args: {:?}", args);
+        let correct = Args {
+            a: true,
+            b: 42, 
+            g: 6969420,
+            d: vec![1, 0, -1],
+            e: None
+        };
+        assert_eq!(args, correct);
     }
 
+    #[test]
+    fn gnu_wc() {
+        #[derive(Debug, Default, PartialEq)]
+        struct Args {
+            bytes: bool,
+            chars: bool,
+            lines: bool,
+            words: bool,
+            max_len: bool,
+            files: Vec<String>,
+        }
+        let mut args = Args::default();
+        let input = "-c -l -L --files0-from=-";
+        Yaap::create_from(String::new(), own(input.split(' ').collect()))
+            .contains(&mut args.bytes, Arg::from("bytes", "print byte counts").with_short('c'))
+            .contains(&mut args.chars, Arg::from("chars", "print char counts").with_short('m'))
+            .contains(&mut args.lines, Arg::from("lines", "print newline counts").with_short('l'))
+            .contains(&mut args.words, Arg::from("words", "print word counts").with_short('w'))
+            .contains(&mut args.max_len, Arg::from("max-line-length", 
+                                                   "print the maximum display width")
+                      .with_short('L'))
+            .extract_list(&mut args.files, Arg::from("files0-from", "read input from the files"))
+            .finish();
+        let correct = Args {
+            bytes: true,
+            chars: false,
+            lines: true,
+            words: false,
+            max_len: true,
+            files: vec![String::from("-")],
+        };
+        assert_eq!(args, correct);
+    }
+
+    #[test]
+    #[should_panic]
+    fn forgot_to_finish_1() {
+        let mut b = false;
+        Yaap::create_from(String::new(), vec![])
+            .contains(&mut b, Arg::from("", ""))
+            //.finish()
+            ;
+    }
 }
 

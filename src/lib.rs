@@ -120,6 +120,8 @@ pub trait ArgTrait : Debug + Default {
  *      Args passed by the user (e.g. `./a.out arg1 arg2 arg3`) arg ArgS (ArgStr)
  *      Args constructed by the dev (e.g. `Arg::from(..)` are ArgM (ArgMatch)
  *          public type alias called `Arg` for benefit of users
+ *
+ *  Add a --version/-V option like --help/-h ?
  */
 
 
