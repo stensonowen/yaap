@@ -28,20 +28,24 @@ impl Yaap<YaapOpts> {
 }
 
 impl Yaap<YaapArgs> {
-    pub fn contains(mut self, result: &mut bool, arg: Arg<FlagArg>) -> Self {
+    pub fn contains(mut self, result: &mut bool, arg_m: Arg<FlagArg>) -> Self {
         // TODO verify only one exists ?
         *result = false;
-        for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
-            match arg.does_match(s) {
+        //for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
+        for arg_s in Self::args(&mut self.argv) {
+            match arg_m.does_match(&arg_s.text) {
                 ArgMatch::NoMatch => {},
                 ArgMatch::Match => {
-                    *free = false;
+                    //*free = false;
+                    arg_s.free = false;
                     *result = true;
                 },
                 ArgMatch::Contains(_) => {
-                    *free = false; // ill defined?
+                    //*free = false; // ill defined?
+                    //arg.free = false;
+                    arg_s.free = false;
                     self.errs.push(ArgError::UnexpectedValue {
-                        long: arg.long, attempt: s.to_owned()
+                        long: arg_m.long, attempt: arg_s.text.to_owned()
                     });
                 }
             }
@@ -61,7 +65,7 @@ impl Yaap<YaapArgs> {
         }).any(|x|x);
         self.errs.append(&mut errs);
         */
-        self.args.push(arg.strip_type());
+        self.args.push(arg_m.strip_type());
         self
     }
 }

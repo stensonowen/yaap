@@ -89,16 +89,17 @@ enum ListHistory {
 
 impl Yaap<YaapArgs> {
 
-    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg: Arg<ListArg<T>>)
+    pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg_m: Arg<ListArg<T>>)
         -> Self
         where T: FromStr + Debug + Default
     {
         assert!(result.is_empty());
-        let mut max_left = arg.kind.len.unwrap_or(self.argv.len());
+        let mut max_left = arg_m.kind.len.unwrap_or(self.argv.len());
         let mut match_next = false;
-        assert_eq!(self.argv.len(), self.free.len());
+        //assert_eq!(self.argv.len(), self.free.len());
         //for (s,free) in self.argv.iter().zip(self.free.iter_mut()) {
-        for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
+        //for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
+        for arg_s in Self::args(&mut self.argv) {
             //println!("BEGINNING: {}, match_next: {}", s, match_next);
             if max_left == 0 { 
                 break 
@@ -112,17 +113,20 @@ impl Yaap<YaapArgs> {
                 //  e.g. `--long 0 --long 1 --long=2`
                 //   (or just `--long=0,1,2,3,4`
                 match_next = false;
-                *free = false;
-                Some(s)
+                //*free = false;
+                arg_s.free = false;
+                Some(&arg_s.text)
             } else {
-                match ListArg::does_match(&arg, s) {
+                match ListArg::does_match(&arg_m, &arg_s.text) {
                     ArgMatch::Contains(ss) => {
-                        *free = false;
+                        //*free = false;
+                        arg_s.free = false;
                         match_next = false;
                         Some(ss)
                     },
                     ArgMatch::Match => {
-                        *free = false;
+                        //*free = false;
+                        arg_s.free = false;
                         match_next = true;
                         None
                     },
@@ -139,7 +143,7 @@ impl Yaap<YaapArgs> {
             // try to parse everything and place it into the result
             if let Some(ss) = arg_str {
                 println!("xxx: {:?}", ss);
-                match arg.extract_match(ss) {
+                match arg_m.extract_match(ss) {
                     Err(e) => self.errs.push(e),
                     Ok(ListPart::ListElem(e)) => result.push(e),
                     Ok(ListPart::ListWhole(ref mut v)) => result.append(v),
@@ -152,7 +156,7 @@ impl Yaap<YaapArgs> {
         //        long: arg.long, attempt: 
         //}
 
-        self.args.push(arg.strip_type());
+        self.args.push(arg_m.strip_type());
         self
     }
 

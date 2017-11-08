@@ -46,34 +46,37 @@ impl Yaap<YaapOpts> {
 impl Yaap<YaapArgs> {
 
 
-    fn find_values<T>(&mut self, result: &mut T, arg: &Arg<ValArg<T>>) -> usize
+    fn find_values<T>(&mut self, result: &mut T, arg_m: &Arg<ValArg<T>>) -> usize
         where T: FromStr + Default + Debug
     {
         let mut times_set = 0usize;
         let mut next_match = false;
         // can't use `.windows()` here because might be missing last argument
-        assert_eq!(self.argv.len(), self.free.len());
-        for (s,free) in Self::args(&self.argv)
-            .zip(self.free.iter_mut())
-        {
+        //assert_eq!(self.argv.len(), self.free.len());
+        for arg_s in Self::args(&mut self.argv) {
+        //for (s,free) in Self::args(&self.argv)
+        //    .zip(self.free.iter_mut())
+        //{
             // the text of the arg value: either `--long=X` or `--long X`
             let arg_str: Option<&str> = if next_match {
                 next_match = false;
-                Some(s)
+                Some(&arg_s.text)
             } else {
-                match ValArg::does_match(&arg, s) {
+                match ValArg::does_match(&arg_m, &arg_s.text) {
                     ArgMatch::NoMatch => None,
-                    ArgMatch::Contains(s) => Some(s),
+                    ArgMatch::Contains(ss) => Some(ss),
                     ArgMatch::Match => { 
-                        *free = false; 
+                        arg_s.free = false;
+                        //*free = false; 
                         next_match = true; 
                         None 
                     }
                 }
             };
             if let Some(ss) = arg_str {
-                *free = false;
-                match arg.extract_match(ss) {
+                arg_s.free = false;
+                //*free = false;
+                match arg_m.extract_match(ss) {
                     Ok(arg_val) => {
                         *result = arg_val;
                         times_set += 1;
@@ -85,21 +88,21 @@ impl Yaap<YaapArgs> {
         times_set
     }
 
-    pub fn extract_val<T>(mut self, result: &mut T, mut arg: Arg<ValArg<T>>) -> Self
+    pub fn extract_val<T>(mut self, result: &mut T, mut arg_m: Arg<ValArg<T>>) -> Self
         where T: FromStr + Default + Debug
     {
-        let times_set = self.find_values(result, &arg);
+        let times_set = self.find_values(result, &arg_m);
         if times_set == 0 {
-            if let Some(def) = arg.kind.default.take() {
+            if let Some(def) = arg_m.kind.default.take() {
                 *result = def;
             } else {
-                self.errs.push(ArgError::MissingArg { long: arg.long });
+                self.errs.push(ArgError::MissingArg { long: arg_m.long });
             }
         } else if times_set > 1 {
             // viable for a list but not here
-            self.errs.push(ArgError::Repetition { long: arg.long } );
+            self.errs.push(ArgError::Repetition { long: arg_m.long } );
         }
-        self.args.push(arg.strip_type());
+        self.args.push(arg_m.strip_type());
         self
     }
 

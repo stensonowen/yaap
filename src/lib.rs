@@ -1,21 +1,20 @@
 
 mod test;
+mod begin;
 
-pub mod begin;
-//use begin::{BeginsWith, NumMatches};
+mod arg;
+pub use arg::ArgM;
 
-pub mod arg;
-pub use arg::{Arg};
+mod err;
+use err::ArgError;
 
-pub mod err;
-pub use err::ArgError;
-
-pub mod builder;
+mod builder;
 pub use builder::Yaap;
 
 use std::fmt::Debug;
 
-pub type ArgResult<T> = Result<T, ArgError>;
+type ArgResult<T> = Result<T, ArgError>;
+pub type Arg<T> = ArgM<T>;
 
 #[derive(Debug, PartialEq)]
 pub enum ArgMatch<'a> {
@@ -53,10 +52,6 @@ pub trait ArgTrait : Debug + Default {
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType>;
 }
 
-//use std::str::FromStr;
-//pub trait Parsable : Debug + FromStr { }
-
-// uhhhh can I do something like --list=1 --list=2 --list=3 ?
 
 /*
  * KEEP IN MIND
@@ -67,6 +62,7 @@ pub trait ArgTrait : Debug + Default {
  *          e.g. `cp` has 2: `src` and `dst`
  *          these are all arguments that don't start with a hyphen
  *           OR are found after a `--`
+ *      should see how kbknapp does it
  *  string args that have spaces (with quotes)
  *  negatable args
  *      add flag to `short_matches` and `long_matches`
@@ -122,6 +118,13 @@ pub trait ArgTrait : Debug + Default {
  *          public type alias called `Arg` for benefit of users
  *
  *  Add a --version/-V option like --help/-h ?
+ *
+ * Should the .is_required() builder helper be Arg-specific?
+ *  I don't think it makes sense to be a method of FlagArg, right?
+ *      having a required FlagArg means it must be set to true, right?
+ *      that's not particularly useful/expressive
+ *      it's a little awkward to be an explicit field for (n-1) of n implementors
+ *      but idk that's probably how it should be
  */
 
 

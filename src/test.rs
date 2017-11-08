@@ -137,7 +137,7 @@ mod test {
         let mut b = false;
         Yaap::create_from(String::new(), vec![])
             .contains(&mut b, Arg::from("", ""))
-            //.finish()
+            //.finish() // forgetting this is a panic!
             ;
     }
 }

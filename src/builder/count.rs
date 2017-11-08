@@ -41,18 +41,21 @@ impl Yaap<YaapOpts> {
 }
 
 impl Yaap<YaapArgs> {
-    pub fn count(mut self, result: &mut usize, arg: Arg<CountArg>) -> Self {
+    pub fn count(mut self, result: &mut usize, arg_m: Arg<CountArg>) -> Self {
         let mut count = 0;
-        for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
-            match CountArg::does_match(&arg, s) {
+        for arg_s in Self::args(&mut self.argv) {
+        //for (s,free) in Self::args(&self.argv).zip(self.free.iter_mut()) {
+            match CountArg::does_match(&arg_m, &arg_s.text) {
                 ArgMatch::NoMatch => {},
                 ArgMatch::Match => {
-                    *free = false;
+                    arg_s.free = false;
+                    //*free = false;
                     count += 1
                 },
                 ArgMatch::Contains(t) => {
-                    *free = false;
-                    match arg.extract_match(t) {
+                    arg_s.free = false;
+                    //*free = false;
+                    match arg_m.extract_match(t) {
                         Ok(n) => count += n,
                         Err(e) => self.errs.push(e),
                     }
@@ -60,7 +63,7 @@ impl Yaap<YaapArgs> {
             }
         }
         *result = count;
-        self.args.push(arg.strip_type());
+        self.args.push(arg_m.strip_type());
         self
     }
 }

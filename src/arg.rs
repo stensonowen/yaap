@@ -3,11 +3,11 @@
 // Is that a good design pattern? It's verbose but it's safe
 // I don't think there's a tidier way to do the same thing
 
-pub use super::{ArgTrait, ArgResult, ArgMatch};
+use super::{ArgTrait, ArgResult, ArgMatch};
 use begin::{Begins, BeginsWith, NumMatches};
 
 #[derive(Debug)]
-pub struct Arg<T: ArgTrait> {
+pub struct ArgM<T: ArgTrait> {
     pub(crate) long: &'static str,
     pub(crate) short: Option<char>,
     pub(crate) required: bool,
@@ -17,10 +17,10 @@ pub struct Arg<T: ArgTrait> {
 }
 
 
-impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
+impl<M,T> ArgM<T> where T: ArgTrait<MatchType=M> {
 
-    pub fn from(long: &'static str, help: &'static str) -> Arg<T> {
-        Arg::<T> {
+    pub fn from(long: &'static str, help: &'static str) -> ArgM<T> {
+        ArgM::<T> {
             long: long,
             short: None,
             required: false,
@@ -29,8 +29,8 @@ impl<M,T> Arg<T> where T: ArgTrait<MatchType=M> {
         }
     }
 
-    pub(super) fn strip_type(self) -> Arg<()> {
-        Arg {
+    pub(super) fn strip_type(self) -> ArgM<()> {
+        ArgM {
             long: self.long,
             short: self.short,
             required: self.required,

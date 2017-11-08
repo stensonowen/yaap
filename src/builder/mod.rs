@@ -19,10 +19,20 @@ impl BuilderState for YaapOpts {}
 impl BuilderState for YaapArgs {}
 impl BuilderState for YaapDone {}
 
+// an arg that was supplied to the binary
+// as in `./a.out ArgS1 ArgS2 ArgS3`
+#[derive(Debug)]
+pub struct ArgS {
+    text: String,
+    free: bool,
+}
+
 #[derive(Debug)]
 pub struct Yaap<T: BuilderState> {
-    argv: Vec<String>,
-    free: Vec<bool>,
+    argv: Vec<ArgS>,
+    //argv: Vec<String>,
+    //free: Vec<bool>,
+
     errs: Vec<ArgError>,
     args: Vec<Arg<()>>,
 
@@ -64,7 +74,7 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
         mem::forget(old.state);
         Yaap {
             argv: old.argv,
-            free: old.free,
+            //free: old.free,
             errs: old.errs,
             args: old.args,
             name: old.name,
@@ -82,7 +92,7 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
         mem::forget(old.state);
         Yaap {
             argv: old.argv,
-            free: old.free,
+            //free: old.free,
             errs: old.errs,
             args: old.args,
             name: old.name,
@@ -110,11 +120,11 @@ impl super::ArgTrait for () {
 }
 
 impl<T: BuilderState> Yaap<T> {
-    fn args<'a>(args: &'a Vec<String>) -> Box<Iterator<Item=&'a str>+'a> {
-        Box::new(args.iter()
-                 .map(String::as_ref)
+    fn args<'a>(args: &'a mut Vec<ArgS>) -> Box<Iterator<Item=&'a mut ArgS>+'a> {
+        Box::new(args.iter_mut()
+                 //.map(String::as_ref)
                  //.skip(1)
-                 .take_while(|&a| a != "--")
+                 .take_while(|ref a| a.text != "--")
                  )
     }
 }
@@ -123,9 +133,13 @@ impl Yaap<YaapOpts> {
 
     pub fn create_from(name: String, argv: Vec<String>) -> Yaap<YaapOpts> {
         //let free = argv.iter().map(|a| !a.starts_with('-')).collect(); // all be true
-        let free = argv.iter().map(|_| true).collect();
+        //let free = argv.iter().map(|_| true).collect();
+        let argv = argv.into_iter().map(|s| ArgS {
+            text: s,
+            free: true,
+        }).collect();
         Yaap {
-            argv, free, name,
+            argv, name,
             args: vec![],
             errs: vec![],
             auth: None,
@@ -202,17 +216,19 @@ impl Yaap<YaapArgs> {
         }
         *result = free;
         */
-        for (arg,free) in self.argv.iter().zip(self.free.iter_mut())
-            .filter(|&(_, &mut f)| f) 
+        for arg in self.argv.iter_mut().filter(|ref arg| arg.free) 
+        //for (arg,free) in self.argv.iter().zip(self.free.iter_mut())
+        //    .filter(|&(_, &mut f)| f) 
         {
             // assume `--` is not a `free` arg
-            match arg.parse() {
+            match arg.text.parse() {
                 Ok(t) => result.push(t),
                 Err(_) => self.errs.push(ArgError::BadTypeFree {
-                    attempt: arg.to_owned()
+                    attempt: arg.text.to_owned()
                 })
             }
-            *free = false;
+            //*free = false;
+            arg.free = false;
         }
 
         self.into()
@@ -234,9 +250,10 @@ impl Yaap<YaapDone> {
     pub fn finish(self) -> Yaap<YaapDone> {
         if !self.errs.is_empty() {
             panic!("Errors: {:?}", self.errs);
-        } else if self.free.iter().any(|&x|x) {
-            let free: Vec<_> = self.free.iter().zip(self.argv.iter())
-                .filter_map(|(&f,a)| if f { Some(a) } else { None })
+        } else if self.argv.iter().any(|ref arg| arg.free) {
+            let free: Vec<_> = self.argv.iter().filter(|&arg| arg.free)
+            //let free: Vec<_> = self.free.iter().zip(self.argv.iter())
+            //    .filter_map(|(&f,a)| if f { Some(a) } else { None })
                 .collect();
             panic!("Unclaimed free args: {:?}", free);
         } else {
