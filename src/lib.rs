@@ -14,6 +14,9 @@ pub use builder::Yaap;
 mod yaaparg;
 pub use yaaparg::YaapArg;
 
+trait Foo : YaapArg {}
+impl Foo for char {}
+
 use std::fmt::Debug;
 
 type ArgResult<T> = Result<T, ArgError>;

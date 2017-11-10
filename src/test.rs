@@ -150,5 +150,15 @@ mod test {
             //.finish() // forgetting this is a panic!
             ;
     }
+
+    #[test]
+    fn weird_type() {
+        use std::net::SocketAddr;
+        let mut t: SocketAddr = unsafe { ::std::mem::zeroed() };
+        Yaap::create_from(String::new(), vec!["--sa=127.0.0.1:8080".to_owned()])
+            .extract_val(&mut t, Arg::from("sa", "socket addr"))
+            .finish();
+        //println!("ADDR: {:?}", t);
+    }
 }
 

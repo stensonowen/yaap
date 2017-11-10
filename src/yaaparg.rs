@@ -3,14 +3,58 @@
 
 use std::str::FromStr;
 use std::fmt::Debug;
+
 // the trait a struct/enum must implement to be coerced via a Val/List
 pub trait YaapArg : FromStr + Debug {
     // an associated constant might be handy
     fn type_name() -> &'static str;
 }
 
+// implement YaapArg for all types that FromStr is implemented for
+// enumerated here: https://doc.rust-lang.org/std/str/trait.FromStr.html
+macro_rules! impl_yaap {
+    ($type:ident) => (
+        impl YaapArg for $type {
+            fn type_name() -> &'static str {
+                stringify!($type)
+            }
+        }
+    )
+}
+
+// misc
+impl_yaap!(bool);
+impl_yaap!(char);
+impl_yaap!(String);
+// floats
+impl_yaap!(f32);
+impl_yaap!(f64);
+// unsigned
+impl_yaap!(u8);
+impl_yaap!(u16);
+impl_yaap!(u32);
+impl_yaap!(u64);
+impl_yaap!(usize);
+// unsigned
+impl_yaap!(i8);
+impl_yaap!(i16);
+impl_yaap!(i32);
+impl_yaap!(i64);
+impl_yaap!(isize);
+// IpAddr types
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+impl_yaap!(IpAddr);
+impl_yaap!(Ipv4Addr);
+impl_yaap!(Ipv6Addr);
+// SocketAddr types
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
+impl_yaap!(SocketAddr);
+impl_yaap!(SocketAddrV4);
+impl_yaap!(SocketAddrV6);
+// omitted: TokenStream (for now)
+
+
 /*
- * from https://doc.rust-lang.org/std/str/trait.FromStr.html
  *
     impl FromStr for bool  type Err = ParseBoolError;
     impl FromStr for f32  type Err = ParseFloatError;
@@ -38,40 +82,3 @@ pub trait YaapArg : FromStr + Debug {
     impl FromStr for SocketAddr  type Err = AddrParseError;
     impl FromStr for TokenStream
     */
-
-impl YaapArg for bool  { fn type_name() -> &'static str { "bool"  } }
-impl YaapArg for char  { fn type_name() -> &'static str { "char"  } }
-
-impl YaapArg for f32   { fn type_name() -> &'static str { "f32"   } }
-impl YaapArg for f64   { fn type_name() -> &'static str { "f64"   } }
-
-impl YaapArg for  u8   { fn type_name() -> &'static str { "u8"    } }
-impl YaapArg for u16   { fn type_name() -> &'static str { "u16"   } }
-impl YaapArg for u32   { fn type_name() -> &'static str { "u32"   } }
-impl YaapArg for u64   { fn type_name() -> &'static str { "u64"   } }
-impl YaapArg for usize { fn type_name() -> &'static str { "usize" } }
-// TODO u128? 
-
-impl YaapArg for  i8   { fn type_name() -> &'static str { "i8"    } }
-impl YaapArg for i16   { fn type_name() -> &'static str { "i16"   } }
-impl YaapArg for i32   { fn type_name() -> &'static str { "i32"   } }
-impl YaapArg for i64   { fn type_name() -> &'static str { "i64"   } }
-impl YaapArg for isize { fn type_name() -> &'static str { "isize" } }
-// TODO i128? 
-
-//impl YaapArg for { fn type_name() -> &'static str { ""  } }
-impl YaapArg for String { fn type_name() -> &'static str { "String"  } }
-
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-impl YaapArg for IpAddr { fn type_name() -> &'static str { "IpAddr"  } }
-impl YaapArg for Ipv4Addr { fn type_name() -> &'static str { "Ipv4Addr"  } }
-impl YaapArg for Ipv6Addr { fn type_name() -> &'static str { "Ipv6Addr"  } }
-
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
-impl YaapArg for SocketAddr { fn type_name() -> &'static str { "SocketAddr"  } }
-impl YaapArg for SocketAddrV4 { fn type_name() -> &'static str { "SocketAddrV4"  } }
-impl YaapArg for SocketAddrV6 { fn type_name() -> &'static str { "SocketAddrV6"  } }
-
-// for proc_macro
-//impl YaapArg for TokenStream { fn type_name() -> &'static str { "TokenStream"  } }
-
