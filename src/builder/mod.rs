@@ -274,13 +274,16 @@ impl Yaap<YaapDone> {
                                 if self.desc.is_some() { "\n\n" } else { "" }, 
                                 self.name, // if self.has_free
                                 );
-            let help_arg = Arg::from("--help", "Display this message")
+            let help_arg = Arg::from("help", "Display this message")
                 .with_short('h');
             let max_arg_len = self.args.iter().fold("help".len(), |acc, arg| {
                 ::std::cmp::max(acc, arg.long.len())
             });
+            let any_shorts = self.args.iter().any(|a| a.short.is_some());
+            let shorts_len = if any_shorts { "-_ ".len() } else { 0 };
             //let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
-            let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
+            //let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
+            let max_len = shorts_len + "--".len() + max_arg_len + "  ".len();
             for arg in iter::once(&help_arg).chain(self.args.iter()) {
                 let mut len = 0;
                 let mut arg_s = String::from("\t");
@@ -289,6 +292,9 @@ impl Yaap<YaapDone> {
                     arg_s.push('-');
                     arg_s.push(c);
                     arg_s.push(' ');
+                    len += 3;
+                } else if any_shorts {
+                    arg_s.push_str("   ");
                     len += 3;
                 }
                 // long

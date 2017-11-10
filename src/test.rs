@@ -96,6 +96,27 @@ mod test {
         };
         assert_eq!(args, correct);
     }
+    
+    #[test]
+    fn app1_help() {
+        #[derive(Debug, PartialEq)]
+        struct Args {
+            a: bool,        // flag
+            b: usize,       // count
+            g: u64,         // val
+            d: Vec<i8>,     // list
+            e: Option<bool>,// omitted (use a `try_` fn)
+        }
+        let mut args: Args = unsafe { ::std::mem::zeroed() };
+        let input = "--help";
+        Yaap::create_from(String::new(), own(input.split(' ').collect()))
+            .contains(       &mut args.a, Arg::from("aa",   "alpha").with_short('a'))
+            .count(          &mut args.b, Arg::from("bbb",  "beta") .with_short('b'))
+            .extract_val(    &mut args.g, Arg::from("gggg", "gamma").with_short('g'))
+            .try_extract_val(&mut args.e, Arg::from("eee",  "epsilon"))
+            .extract_list(   &mut args.d, Arg::from("dd",   "delta").with_short('d'))
+            .finish();
+    }
 
     #[test]
     fn gnu_wc() {
@@ -144,6 +165,14 @@ mod test {
     #[test]
     #[should_panic]
     fn forgot_to_finish_1() {
+        Yaap::create_from(String::new(), vec![])
+            //.finish() // forgetting this is a panic!
+            ;
+    }
+
+    #[test]
+    #[should_panic]
+    fn forgot_to_finish_2() {
         let mut b = false;
         Yaap::create_from(String::new(), vec![])
             .contains(&mut b, Arg::from("", ""))
@@ -152,13 +181,16 @@ mod test {
     }
 
     #[test]
-    fn weird_type() {
+    fn weird_types() {
         use std::net::SocketAddr;
         let mut t: SocketAddr = unsafe { ::std::mem::zeroed() };
-        Yaap::create_from(String::new(), vec!["--sa=127.0.0.1:8080".to_owned()])
+        let mut c: char = unsafe { ::std::mem::zeroed() };
+        Yaap::create_from(String::new(), own(vec!["--sa=127.0.0.1:8080", "--c=0"]))
             .extract_val(&mut t, Arg::from("sa", "socket addr"))
+            .extract_val(&mut c, Arg::from("c", "character"))
             .finish();
         //println!("ADDR: {:?}", t);
+        //println!("CHAR: {:?}", c);
     }
 }
 

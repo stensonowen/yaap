@@ -14,13 +14,12 @@ pub use builder::Yaap;
 mod yaaparg;
 pub use yaaparg::YaapArg;
 
-trait Foo : YaapArg {}
-impl Foo for char {}
-
 use std::fmt::Debug;
+
 
 type ArgResult<T> = Result<T, ArgError>;
 pub type Arg<T> = ArgM<T>;
+
 
 #[derive(Debug, PartialEq)]
 pub enum ArgMatch<'a> {
@@ -41,7 +40,7 @@ pub enum ArgMatch<'a> {
 impl<'a> ArgMatch<'a> {
     // e.g. arg.short_matches(s).or_else(|| arg.long_matches(s))
     //  less verbose and the closure is only computed if necessary
-    fn or_else<F: FnOnce()-> ArgMatch<'a>>(self, f: F) -> ArgMatch<'a> {
+    fn or_else<F: Fn()-> ArgMatch<'a>>(self, f: F) -> ArgMatch<'a> {
         match self {
             ArgMatch::NoMatch => f(),
             _ => self
