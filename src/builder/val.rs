@@ -3,12 +3,12 @@ use super::super::{ArgTrait, ArgResult, ArgMatch, ArgError};
 use std::str::FromStr;
 use std::fmt::Debug;
 
-#[derive(Debug, Default)]
-pub struct ValArg<T: FromStr + Default + Debug> {
+#[derive(Debug)]
+pub struct ValArg<T: FromStr + Debug> {
     default: Option<T>
 }
 
-impl<T: FromStr + Default + Debug> ArgTrait for ValArg<T> {
+impl<T: FromStr + Debug> ArgTrait for ValArg<T> {
     type MatchType = T;
 
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
@@ -18,7 +18,7 @@ impl<T: FromStr + Default + Debug> ArgTrait for ValArg<T> {
     }
 }
 
-impl<T: FromStr + Default + Debug> Arg<ValArg<T>> {
+impl<T: FromStr + Debug> Arg<ValArg<T>> {
     pub fn with_default(mut self, def: T) -> Self {
         self.kind.default = Some(def);
         self
@@ -28,7 +28,7 @@ impl<T: FromStr + Default + Debug> Arg<ValArg<T>> {
 impl Yaap<YaapOpts> {
     pub fn extract_val<T>(self, result: &mut T, arg: Arg<ValArg<T>>)
         -> Yaap<YaapArgs>
-        where T: FromStr + Default + Debug
+        where T: FromStr + Debug
     {
         let new: Yaap<YaapArgs> = self.into();
         new.extract_val(result, arg)
@@ -36,7 +36,7 @@ impl Yaap<YaapOpts> {
 
     pub fn try_extract_val<T>(self, result: &mut Option<T>, arg: Arg<ValArg<T>>)
         -> Yaap<YaapArgs>
-        where T: FromStr + Default + Debug
+        where T: FromStr + Debug
     {
         let new: Yaap<YaapArgs> = self.into();
         new.try_extract_val(result, arg)
@@ -47,7 +47,7 @@ impl Yaap<YaapArgs> {
 
 
     fn find_values<T>(&mut self, result: &mut T, arg_m: &Arg<ValArg<T>>) -> usize
-        where T: FromStr + Default + Debug
+        where T: FromStr + Debug
     {
         let mut times_set = 0usize;
         let mut next_match = false;
@@ -89,7 +89,7 @@ impl Yaap<YaapArgs> {
     }
 
     pub fn extract_val<T>(mut self, result: &mut T, mut arg_m: Arg<ValArg<T>>) -> Self
-        where T: FromStr + Default + Debug
+        where T: FromStr + Debug
     {
         let times_set = self.find_values(result, &arg_m);
         if times_set == 0 {
@@ -109,10 +109,12 @@ impl Yaap<YaapArgs> {
     // optional value
     pub fn try_extract_val<T>(mut self, result: &mut Option<T>, mut arg: Arg<ValArg<T>>)
         -> Self
-        where T: FromStr + Default + Debug
+        where T: FromStr + Debug
     {
         let times_set = {
-            let result_inner = result.get_or_insert(T::default());
+            let result_inner = result.get_or_insert(unsafe {
+                ::std::mem::zeroed()
+            });
             self.find_values(result_inner, &arg)
         };
         if times_set == 0 {

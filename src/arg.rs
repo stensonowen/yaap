@@ -25,7 +25,7 @@ impl<M,T> ArgM<T> where T: ArgTrait<MatchType=M> {
             short: None,
             required: false,
             help: help,
-            kind: T::default(),
+            kind: unsafe { ::std::mem::zeroed::<T>() },
         }
     }
 

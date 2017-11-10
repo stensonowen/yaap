@@ -2,8 +2,9 @@
 
 
 use std::str::FromStr;
+use std::fmt::Debug;
 // the trait a struct/enum must implement to be coerced via a Val/List
-pub trait YaapArg : FromStr {
+pub trait YaapArg : FromStr + Debug {
     // an associated constant might be handy
     fn type_name() -> &'static str;
 }

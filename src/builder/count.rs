@@ -2,7 +2,7 @@ use super::{Yaap, YaapOpts, YaapArgs, Arg};
 use super::super::{ArgResult, ArgTrait, ArgMatch, ArgError};
 use begin::BeginsWith;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct CountArg;
 
 impl ArgTrait for CountArg {

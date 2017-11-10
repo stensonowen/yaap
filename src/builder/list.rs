@@ -4,20 +4,20 @@ use std::str::FromStr;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-#[derive(Debug, Default)]
-pub struct ListArg<T: FromStr + Default + Debug> { 
+#[derive(Debug)]
+pub struct ListArg<T: FromStr + Debug> { 
     pub(super) len: Option<usize>,
     phantom: PhantomData<T>,
 }
 
 #[derive(Debug)]
-pub enum ListPart<T: FromStr + Default + Debug> {
+pub enum ListPart<T: FromStr + Debug> {
     ListElem(T),        // --list a b c d
     ListWhole(Vec<T>),  // --list a,b,c,d
     //ListDone,
 }
 
-impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
+impl<T: FromStr + Debug> ArgTrait for ListArg<T> {
     type MatchType = ListPart<T>;
 
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType> {
@@ -52,7 +52,7 @@ impl<T: FromStr + Default + Debug> ArgTrait for ListArg<T> {
     }
 }
 
-impl<T: FromStr + Default + Debug> Arg<ListArg<T>> {
+impl<T: FromStr + Debug> Arg<ListArg<T>> {
     pub fn with_num_args(mut self, max: Option<usize>) -> Self {
         self.kind.len = max;
         self
@@ -63,7 +63,7 @@ impl Yaap<YaapOpts> {
 
     pub fn extract_list<T>(self, result: &mut Vec<T>, arg: Arg<ListArg<T>>) 
         -> Yaap<YaapArgs>
-        where T: FromStr + Debug + Default
+        where T: FromStr + Debug
     {
         let new: Yaap<YaapArgs> = self.into();
         new.extract_list(result, arg)
@@ -91,7 +91,7 @@ impl Yaap<YaapArgs> {
 
     pub fn extract_list<T>(mut self, result: &mut Vec<T>, arg_m: Arg<ListArg<T>>)
         -> Self
-        where T: FromStr + Debug + Default
+        where T: FromStr + Debug
     {
         assert!(result.is_empty());
         let mut max_left = arg_m.kind.len.unwrap_or(self.argv.len());

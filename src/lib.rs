@@ -46,7 +46,7 @@ impl<'a> ArgMatch<'a> {
     }
 }
 
-pub trait ArgTrait : Debug + Default {
+pub trait ArgTrait : Debug + Sized {
     type MatchType;
 
     fn does_match<'a>(arg: &Arg<Self>, s: &'a str) -> ArgMatch<'a> {
