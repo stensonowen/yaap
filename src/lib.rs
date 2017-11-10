@@ -11,6 +11,9 @@ use err::ArgError;
 mod builder;
 pub use builder::Yaap;
 
+mod yaaparg;
+pub use yaaparg::YaapArg;
+
 use std::fmt::Debug;
 
 type ArgResult<T> = Result<T, ArgError>;
@@ -51,6 +54,7 @@ pub trait ArgTrait : Debug + Default {
     }
     fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<Self::MatchType>;
 }
+
 
 
 /*
