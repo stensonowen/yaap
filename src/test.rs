@@ -106,15 +106,18 @@ mod test {
             g: u64,         // val
             d: Vec<i8>,     // list
             e: Option<bool>,// omitted (use a `try_` fn)
+            f: Vec<char>,   // free list
         }
         let mut args: Args = unsafe { ::std::mem::zeroed() };
         let input = "--help";
-        Yaap::create_from(String::new(), own(input.split(' ').collect()))
+        Yaap::create_from("ProgName".to_owned(), own(input.split(' ').collect()))
+            .with_description("Test args for demo help statement")
             .contains(       &mut args.a, Arg::from("aa",   "alpha").with_short('a'))
             .count(          &mut args.b, Arg::from("bbb",  "beta") .with_short('b'))
             .extract_val(    &mut args.g, Arg::from("gggg", "gamma").with_short('g'))
             .try_extract_val(&mut args.e, Arg::from("eee",  "epsilon"))
             .extract_list(   &mut args.d, Arg::from("dd",   "delta").with_short('d'))
+            .collect_free_args(&mut args.f)
             .finish();
     }
 

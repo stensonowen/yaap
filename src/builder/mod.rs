@@ -1,7 +1,6 @@
 
-use super::{Arg, ArgResult, ArgMatch, ArgError};
+use super::{Arg, ArgResult, ArgMatch, ArgError, YaapArg};
 use std::{mem, env, iter};
-use std::str::FromStr;
 
 mod flag;
 mod count;
@@ -34,7 +33,10 @@ pub struct Yaap<T: BuilderState> {
     //free: Vec<bool>,
 
     errs: Vec<ArgError>,
-    args: Vec<Arg<()>>,
+    args: Vec<Arg<()>>, // ArgM?
+
+    //has_free: bool,
+    free: bool,
 
     // an argv entry is `free` if it has been unclaimed by an argument object
     // all argv's start out free; argv[i] can be set to false but not true 
@@ -74,7 +76,7 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
         mem::forget(old.state);
         Yaap {
             argv: old.argv,
-            //free: old.free,
+            free: old.free,
             errs: old.errs,
             args: old.args,
             name: old.name,
@@ -92,7 +94,7 @@ impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
         mem::forget(old.state);
         Yaap {
             argv: old.argv,
-            //free: old.free,
+            free: old.free,
             errs: old.errs,
             args: old.args,
             name: old.name,
@@ -142,6 +144,7 @@ impl Yaap<YaapOpts> {
             argv, name,
             args: vec![],
             errs: vec![],
+            free: false,
             auth: None,
             desc: None,
             vers: None,
@@ -178,7 +181,7 @@ impl Yaap<YaapOpts> {
     // transition to Yaap<YaapDone>
 
     pub fn collect_free_args<T>(self, result: &mut Vec<T>) -> Yaap<YaapDone> 
-        where T: FromStr
+        where T: YaapArg
     {
         let new: Yaap<YaapArgs> = self.into();
         new.collect_free_args(result)
@@ -192,7 +195,7 @@ impl Yaap<YaapOpts> {
 
 impl Yaap<YaapArgs> { 
     pub fn collect_free_args<T>(mut self, result: &mut Vec<T>) -> Yaap<YaapDone> 
-        where T: FromStr
+        where T: YaapArg
     {
         // TODO: maybe make `argv` a field of YaapOpts/YaapArgs or something
         // that way it wouldn't be present in `Yaap<YaapDone>`, which would 
@@ -216,6 +219,7 @@ impl Yaap<YaapArgs> {
         }
         *result = free;
         */
+        self.free = true;
         for arg in self.argv.iter_mut().filter(|ref arg| arg.free) 
         //for (arg,free) in self.argv.iter().zip(self.free.iter_mut())
         //    .filter(|&(_, &mut f)| f) 
@@ -265,15 +269,48 @@ impl Yaap<YaapDone> {
     // TODO: getters
     // in case someone wants to see the help message or metadata / args / something
 
+    fn usage_prelude(&self) -> String {
+        /* ```
+         * Program Description
+         *
+         * Usage: prog_name [OPTIONS] ARGS...
+         * ```
+         * or 
+         * ```
+         * Usage: prog_name
+         * ```
+         */
+        let mut prelude = match self.desc {
+            Some(d) => {
+                let mut s = d.to_owned();
+                s.push('\n');
+                s.push('\n');
+                s
+            },
+            None => String::new()
+        };
+        prelude.push_str("Usage: ");
+        prelude.push_str(&self.name);
+        if !self.args.is_empty() { 
+            prelude.push_str(" [OPTIONS]"); 
+        }
+        if self.free { 
+            prelude.push_str(" ARGS..."); 
+        }
+        prelude.push('\n');
+        prelude
+    }
+
     fn usage(&self) -> String {
         if let Some(h) = self.help { 
             h.to_owned()
         } else {
-            let mut s = format!("{}{} \nUsage: {} [OPTIONS] [FREE ARGS ?] \
-                                \nOptions: \n", self.desc.unwrap_or(""), 
-                                if self.desc.is_some() { "\n\n" } else { "" }, 
-                                self.name, // if self.has_free
-                                );
+            let mut s = self.usage_prelude();
+            //let mut s = format!("{}{} \nUsage: {} [OPTIONS] [FREE ARGS ?] \
+            //                    \nOptions: \n", self.desc.unwrap_or(""),
+            //                    if self.desc.is_some() { "\n\n" } else { "" },
+            //                    self.name, // if self.has_free
+            //                    );
             let help_arg = Arg::from("help", "Display this message")
                 .with_short('h');
             let max_arg_len = self.args.iter().fold("help".len(), |acc, arg| {
@@ -281,7 +318,6 @@ impl Yaap<YaapDone> {
             });
             let any_shorts = self.args.iter().any(|a| a.short.is_some());
             let shorts_len = if any_shorts { "-_ ".len() } else { 0 };
-            //let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
             //let max_len = "-x ".len() + "--".len() + max_arg_len + "  ".len();
             let max_len = shorts_len + "--".len() + max_arg_len + "  ".len();
             for arg in iter::once(&help_arg).chain(self.args.iter()) {
