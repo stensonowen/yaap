@@ -3,7 +3,7 @@
 mod test {
     use super::super::{Yaap, Arg};
 
-    fn own(input: Vec<&'static str>) -> Vec<String> {
+    pub(crate) fn own(input: Vec<&'static str>) -> Vec<String> {
         input.into_iter().map(|i| i.to_owned()).collect()
     }
 

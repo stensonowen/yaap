@@ -119,3 +119,25 @@ impl Arg<CountArg> {
     }
 }
 */
+
+#[cfg(test)]
+mod test {
+    use Yaap;
+    use ArgM;
+
+    #[test]
+    fn count() {
+        let mut c = 0;
+        //Yaap::create_from(String::new(), own(vec!["-ccc", "-c=2", "-c", "--c=5"]))
+        Yaap::create_from(String::new(), vec!["-ccc", "-c=2", "-c", "--c=5"].into())
+            .count(&mut c, ArgM::from("c", "").with_short('c'))
+            .finish();
+
+        assert_eq!(c, 11);
+    }
+
+    #[test]
+    fn foo() {
+        panic!()
+    }
+}

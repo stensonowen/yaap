@@ -18,6 +18,26 @@ impl BuilderState for YaapOpts {}
 impl BuilderState for YaapArgs {}
 impl BuilderState for YaapDone {}
 
+
+use ArgTrait;
+/*
+impl<M, T: ArgTrait<MatchType=M>> ArgTrait for Box<T> {
+    type MatchType = M;
+    fn extract_match(arg: &Arg<Self>, s: &str) -> ArgResult<M> {
+        T::extract_match(arg, s)
+    }
+}
+*/
+
+use arg::ArgM;
+use self::flag::FlagArg;
+fn foo() {
+    let a: ArgM<FlagArg>;
+    let b: ArgM<ArgTrait>;
+}
+
+
+
 // an arg that was supplied to the binary
 // as in `./a.out ArgS1 ArgS2 ArgS3`
 #[derive(Debug)]

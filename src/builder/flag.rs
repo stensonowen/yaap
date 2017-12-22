@@ -15,8 +15,7 @@ impl ArgTrait for FlagArg {
 
 impl Arg<FlagArg> {
     pub(super) fn help() -> Self {
-        Self::from("help", "Print this message")
-            .with_short('h')
+        Self::from("help", "Print this message").with_short('h')
     }
 }
 
