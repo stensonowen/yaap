@@ -20,39 +20,34 @@ impl ArgType for CountArg {
         let mut definitions_allowed = true;
 
         for arg_s in args.iter_mut() {
-            let mut used = arg_s.used;
-            if arg_s.used == false {
-                let m = arg_s.matches_short_opt(argm.short)
-                    .or_else(|| arg_s.matches_long(argm.long)); 
-                match m {
-                    ArgMatch::Match => {
-                        if definitions_allowed {
-                            count += 1;
-                            used = true;
-                        } else {
-                            return Err(ArgError::Repetition{long: argm.long});
-                        }
-                    },
-                    ArgMatch::Contains(s) => {
-                        if definitions_allowed && count == 0 {
-                            match s.parse() {
-                                Ok(n) => count = n,
-                                Err(_) => return Err(ArgError::BadType {
-                                    long: argm.long, 
-                                    exp_type: u8::type_name(), 
-                                    attempt: s.to_string(),
-                                }),
-                            }
-                            definitions_allowed = false;
-                            used = true;
-                        } else {
-                            return Err(ArgError::Repetition{long: argm.long});
-                        }
-                    },
-                    ArgMatch::NoMatch => {},
-                }
+            if arg_s.used {
+                continue
             }
-            arg_s.used = used;
+            match arg_s.matches(argm.long, argm.short) {
+                ArgMatch::Match => {
+                    if definitions_allowed {
+                        count += 1;
+                    } else {
+                        return Err(ArgError::Repetition{long: argm.long});
+                    }
+                },
+                ArgMatch::Contains(s) => {
+                    if definitions_allowed && count == 0 {
+                        match s.parse() {
+                            Ok(n) => count = n,
+                            Err(_) => return Err(ArgError::BadType {
+                                long: argm.long, 
+                                exp_type: u8::type_name(), 
+                                attempt: s.to_string(),
+                            }),
+                        }
+                        definitions_allowed = false;
+                    } else {
+                        return Err(ArgError::Repetition{long: argm.long});
+                    }
+                },
+                ArgMatch::NoMatch => {},
+            }
         }
 
         /*

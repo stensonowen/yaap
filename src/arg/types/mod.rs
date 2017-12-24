@@ -3,6 +3,6 @@
 //pub(crate) mod count;
 
 pub mod flag;
-//pub use self::flag::FlagArg;
 pub mod count;
+pub mod val;
 
