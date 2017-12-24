@@ -5,11 +5,12 @@ mod types;
 
 use self::types::flag::FlagArg;
 use self::types::count::CountArg;
-use self::arg_s::ArgS;
+pub(crate) use self::arg_s::ArgS;
+pub(crate) use self::err::ArgError;
 use self::err::ArgResult;
 
 /// Argument matcher: contains usage data
-struct ArgM<T: ArgType> {
+pub struct ArgM<T: ArgType> {
     help: &'static str,
     long: &'static str,
     short: Option<char>, // str? generic?
@@ -35,7 +36,7 @@ impl<T: ArgType> ArgM<T> {
 }
 
 /// Different kinds of argument matchers (e.g. flag or value)
-trait ArgType: Default + Sized {
+pub trait ArgType: Default + Sized {
     /// The return type of a match (e.g. boolean for a flag)
     type Contents; // better name?
 
@@ -49,6 +50,6 @@ mod test {
     use arg::arg_s::ArgS;
 
     pub(crate) fn own(s: &str) -> Vec<ArgS> {
-        s.split(' ').map(|s| ArgS::from(s)).collect()
+        s.split(' ').map(|s| ArgS::from(s.to_string())).collect()
     }
 }

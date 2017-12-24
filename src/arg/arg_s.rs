@@ -22,16 +22,15 @@ impl<'a> ArgMatch<'a> {
 /// User-supplied argument string (e.g. "--help")
 #[derive(Debug)]
 //pub(crate) struct ArgS(String);
-pub(crate) struct ArgS {
+pub struct ArgS {
     pub(crate) text: String,
     pub(crate) used: bool,
 }
 
 impl ArgS {
-    pub(crate) fn from(s: &str) -> Self {
-        //ArgS(s.to_string())
+    pub(crate) fn from(s: String) -> Self {
         ArgS {
-            text: s.to_string(),
+            text: s,
             used: false,
         }
     }
