@@ -15,13 +15,13 @@ pub struct CountArg {
 
 impl ArgType for CountArg {
     type Contents = u8;
-    fn extract(argm: &ArgM<Self>, args: &mut Vec<Option<ArgS>>) -> ArgResult<Self::Contents> {
+    fn extract(argm: &ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Self::Contents> {
         let mut count = 0;
         let mut definitions_allowed = true;
 
-        for arg in args.iter_mut() {
-            let mut used = false;
-            if let Some(ref mut arg_s) = *arg {
+        for arg_s in args.iter_mut() {
+            let mut used = arg_s.used;
+            if arg_s.used == false {
                 let m = arg_s.matches_short_opt(argm.short)
                     .or_else(|| arg_s.matches_long(argm.long)); 
                 match m {
@@ -52,9 +52,7 @@ impl ArgType for CountArg {
                     ArgMatch::NoMatch => {},
                 }
             }
-            if used {
-                *arg = None;
-            }
+            arg_s.used = used;
         }
 
         /*

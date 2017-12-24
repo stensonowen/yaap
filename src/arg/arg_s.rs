@@ -21,19 +21,27 @@ impl<'a> ArgMatch<'a> {
 
 /// User-supplied argument string (e.g. "--help")
 #[derive(Debug)]
-pub(crate) struct ArgS(String);
+//pub(crate) struct ArgS(String);
+pub(crate) struct ArgS {
+    pub(crate) text: String,
+    pub(crate) used: bool,
+}
 
 impl ArgS {
     pub(crate) fn from(s: &str) -> Self {
-        ArgS(s.to_string())
+        //ArgS(s.to_string())
+        ArgS {
+            text: s.to_string(),
+            used: false,
+        }
     }
     // uh the lifetimes can be elided but is that clearer?
-    fn matches_short<'a>(&'a self, short: char) -> ArgMatch<'a> {
-        let mut chars = self.0.chars();
+    fn matches_short<'a>(&'a  self, short: char) -> ArgMatch<'a> {
+        let mut chars = self.text.chars();
         if (chars.next(), chars.next()) == (Some('-'), Some(short)) {
             match chars.next() {
                 None => ArgMatch::Match,
-                Some('=') => ArgMatch::Contains(&self.0[3..]),
+                Some('=') => ArgMatch::Contains(&self.text[3..]),
                 // invalid state; error wil be caught somewhere else
                 _ => ArgMatch::NoMatch
             }
@@ -42,7 +50,7 @@ impl ArgS {
         }
     }
 
-    pub(crate) fn matches_short_opt(&self, short: Option<char>) -> ArgMatch {
+    pub(crate) fn matches_short_opt<'a>(&'a  self, short: Option<char>) -> ArgMatch<'a> {
         if let Some(c) = short {
             self.matches_short(c)
         } else {
@@ -50,11 +58,11 @@ impl ArgS {
         }
     }
 
-    pub(crate) fn matches_long<'a>(&'a self, long: &str) -> ArgMatch<'a> {
-        let this = &self.0;
+    pub(crate) fn matches_long<'a>(&'a  self, long: &str) -> ArgMatch<'a> {
+        let this = &self.text;
         if this.starts_with("--") && this[2..].starts_with(long) {
             // indexing like this might fuck up if long options are unicode?
-            let end = &self.0[2+long.len()..];
+            let end = &self.text[2+long.len()..];
             match end.chars().next() {
                 None => ArgMatch::Match,
                 Some('=') => ArgMatch::Contains(&end[1..]),

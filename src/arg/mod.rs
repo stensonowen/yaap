@@ -1,11 +1,10 @@
 
-//use YaapArg;
-
 mod err;
 mod arg_s;
 mod types;
-pub use self::types::flag::FlagArg;
-pub use self::types::count::CountArg;
+
+use self::types::flag::FlagArg;
+use self::types::count::CountArg;
 use self::arg_s::ArgS;
 use self::err::ArgResult;
 
@@ -19,7 +18,7 @@ struct ArgM<T: ArgType> {
 
 impl<T: ArgType> ArgM<T> {
     /// Wrapper so ArgType::extract can be called on ArgM
-    fn extract(&self, args: &mut Vec<Option<ArgS>>) -> ArgResult<<T as ArgType>::Contents> {
+    fn extract(&self, args: &mut Vec<ArgS>) -> ArgResult<<T as ArgType>::Contents> {
         T::extract(self, args)
     }
     fn from(long: &'static str, help: &'static str) -> Self {
@@ -42,14 +41,14 @@ trait ArgType: Default + Sized {
 
     /// Extract Contents from ArgS list, invalidate used ArgSs
     /// If an error is returned, no guarantees are made about the state of `args`
-    fn extract(argm: &ArgM<Self>, args: &mut Vec<Option<ArgS>>) -> ArgResult<Self::Contents>;
+    fn extract(argm: &ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Self::Contents>;
 }
 
 mod test {
     // misc tests / helpers
     use arg::arg_s::ArgS;
 
-    pub(crate) fn own(s: &str) -> Vec<Option<ArgS>> {
-        s.split(' ').map(|s| Some(ArgS::from(s))).collect()
+    pub(crate) fn own(s: &str) -> Vec<ArgS> {
+        s.split(' ').map(|s| ArgS::from(s)).collect()
     }
 }

@@ -4,6 +4,7 @@ use std::str::FromStr;
 use std::fmt::Debug;
 
 mod arg;
+mod yaap;
 mod impls;
 
 /// Trait required for an object to be derivable from arguments
