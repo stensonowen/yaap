@@ -1,5 +1,4 @@
 
-use yaap::{Yaap, YaapArgs};
 use arg::{ArgS, ArgM, ArgType};
 use arg::err::{ArgError, ArgResult};
 use arg::arg_s::ArgMatch;
@@ -45,12 +44,6 @@ impl ArgType for FlagArg {
             arg_s.used = used;
         }
         Ok(result)
-    }
-}
-
-impl Yaap<YaapArgs> {
-    pub fn get_flag(mut self, result: &mut bool, argm: ArgM<FlagArg>) -> Self {
-        self
     }
 }
 

@@ -3,8 +3,8 @@ mod err;
 mod arg_s;
 mod types;
 
-use self::types::flag::FlagArg;
-use self::types::count::CountArg;
+pub(crate) use self::types::flag::FlagArg;
+pub(crate) use self::types::count::CountArg;
 pub(crate) use self::arg_s::ArgS;
 pub(crate) use self::err::ArgError;
 use self::err::ArgResult;
@@ -19,7 +19,7 @@ pub struct ArgM<T: ArgType> {
 
 impl<T: ArgType> ArgM<T> {
     /// Wrapper so ArgType::extract can be called on ArgM
-    fn extract(&self, args: &mut Vec<ArgS>) -> ArgResult<<T as ArgType>::Contents> {
+    pub(crate) fn extract(&self, args: &mut Vec<ArgS>) -> ArgResult<<T as ArgType>::Contents> {
         T::extract(self, args)
     }
     fn from(long: &'static str, help: &'static str) -> Self {

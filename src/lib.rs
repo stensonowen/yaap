@@ -1,7 +1,8 @@
 //! A safe and extensible arg-parsing framework
+#![allow(dead_code)]
 
-use std::str::FromStr;
 use std::fmt::Debug;
+use std::str::FromStr;
 
 mod arg;
 mod yaap;

@@ -21,7 +21,6 @@ impl<'a> ArgMatch<'a> {
 
 /// User-supplied argument string (e.g. "--help")
 #[derive(Debug)]
-//pub(crate) struct ArgS(String);
 pub struct ArgS {
     pub(crate) text: String,
     pub(crate) used: bool,
