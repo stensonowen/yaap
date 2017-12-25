@@ -1,4 +1,5 @@
 
+/*
 /// How an ArgS can match an ArgM
 #[derive(Debug, PartialEq)]
 pub(crate) enum ArgMatch<'a> {
@@ -9,6 +10,7 @@ pub(crate) enum ArgMatch<'a> {
     // contained match, e.g. `--foo=bar`
     Contains(&'a str),
 }
+*/
 
 /*
 impl<'a> ArgMatch<'a> {
@@ -45,8 +47,23 @@ impl ArgS {
         }
     }
 
+    pub(crate) fn matches2(&mut self, long: &'static str, short: Option<char>) -> ArgMatch {
+        {
+            let m = match self.matches_short_opt(short) {
+                ArgMatch::NoMatch => self.matches_long(long),
+                other => other,
+            };
+            if m != ArgMatch::NoMatch {
+                return m
+            }
+        }
+        self.used = true;
+        ArgMatch::NoMatch
+    }
+
+
     // uh the lifetimes can be elided but is that clearer?
-    fn matches_short<'a>(&'a mut self, short: char) -> ArgMatch<'a> {
+    fn matches_short<'a>(&'a self, short: char) -> ArgMatch<'a> {
         let mut chars = self.text.chars();
         if (chars.next(), chars.next()) == (Some('-'), Some(short)) {
             match chars.next() {
@@ -60,7 +77,7 @@ impl ArgS {
         }
     }
 
-    pub(crate) fn matches_short_opt<'a>(&'a mut self, short: Option<char>) -> ArgMatch<'a> {
+    pub(crate) fn matches_short_opt<'a>(&'a self, short: Option<char>) -> ArgMatch<'a> {
         if let Some(c) = short {
             self.matches_short(c)
         } else {
@@ -68,7 +85,7 @@ impl ArgS {
         }
     }
 
-    pub(crate) fn matches_long<'a>(&'a mut self, long: &str) -> ArgMatch<'a> {
+    pub(crate) fn matches_long<'a>(&'a self, long: &str) -> ArgMatch<'a> {
         let this = &self.text;
         if this.starts_with("--") && this[2..].starts_with(long) {
             // indexing like this might fuck up if long options are unicode?
@@ -84,6 +101,7 @@ impl ArgS {
     }
     */
 
+    /*
     /// Determine whether an ArgM matches this ArgS; set self.used if so
     pub(crate) fn matches(&mut self, long: &'static str, short: Option<char>) -> ArgMatch {
         let mut chars = self.text.chars();
@@ -137,6 +155,7 @@ impl ArgS {
             _ => ArgMatch::NoMatch,
         }
     }
+    */
 }
 
 

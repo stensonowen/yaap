@@ -1,7 +1,6 @@
 
-use arg::{ArgS, ArgM, ArgType};
+use arg::{ArgS, ArgM, ArgType, ArgMatch};
 use arg::err::{ArgError, ArgResult};
-use arg::arg_s::ArgMatch;
 
 #[derive(Debug, Default)]
 pub struct FlagArg;
@@ -9,22 +8,19 @@ pub struct FlagArg;
 impl ArgType for FlagArg {
     type Contents = bool;
 
-    fn extract(argm: &ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<bool> {
+    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<bool> {
         let mut result = false;
         // check each arg for relevance
-        for arg_s in args.iter_mut() {
-            // need to keep track of whether arg should be marked used for borrowck
-            // only check unused args
-            if arg_s.used {
+        for &mut ArgS { ref text, ref mut used } in args.iter_mut() {
+            if *used {
                 continue
             }
-            // check if matches either short or long (but short first)
-            let m = arg_s.matches(argm.long, argm.short);
-            match m {
+            match argm.matches(text) {
                 // Arg is present; verify only used once and mark arg used
                 ArgMatch::Match => if result {
                     return Err(ArgError::Repetition{long: argm.long})
                 } else {
+                    *used = true;
                     result = true;
                 },
                 // ArgS contains a value (flags can't have contained values)
@@ -50,7 +46,7 @@ mod test {
     use arg::test::own;
 
     fn flag_helper(s: &'static str) -> ArgResult<bool> {
-        let argm: ArgM<FlagArg> = ArgM::from("flag", "").with_short('f');
+        let mut argm: ArgM<FlagArg> = ArgM::from("flag", "").with_short('f');
         let mut args = own(s);
         argm.extract(&mut args)
     }

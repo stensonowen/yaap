@@ -1,5 +1,6 @@
 
-use arg::{ArgM, ArgType, FlagArg, CountArg, ArgS, ArgError};
+use YaapArg;
+use arg::{ArgM, ArgType, FlagArg, CountArg, ValArg, ArgS, ArgError};
 use std::{env, mem};
 
 /// State trait used for the Yaap builder pattern
@@ -91,7 +92,7 @@ impl Yaap<YaapOpts> {
 
 /// Extract data from command-line arguments
 impl Yaap<YaapArgs> {
-    fn get_generic<T: ArgType>(mut self, result: &mut T::Contents, argm: ArgM<T>) -> Self {
+    fn get_generic<T: ArgType>(mut self, result: &mut T::Contents, mut argm: ArgM<T>) -> Self {
         match argm.extract(&mut self.argv) {
             Ok(r) => *result = r,
             Err(e) => self.errs.push(e),
@@ -103,6 +104,14 @@ impl Yaap<YaapArgs> {
     }
     pub fn get_count(self, result: &mut u8, argm: ArgM<CountArg>) -> Self {
         self.get_generic(result, argm)
+    }
+    pub fn get_val<T: YaapArg>(mut self, result: &mut T, mut argm: ArgM<ValArg<T>>) -> Self {
+        match argm.extract(&mut self.argv) {
+            Ok(Some(r)) => *result = r,
+            Ok(None) => {},
+            Err(e) => self.errs.push(e),
+        }
+        self
     }
 }
 
