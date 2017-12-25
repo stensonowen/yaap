@@ -40,6 +40,7 @@ impl ArgType for CountArg {
             }
             match argm.matches(text) {
                 ArgMatch::Match => {
+                    *used = true;
                     if definitions_allowed {
                         count += 1;
                     } else {
@@ -47,6 +48,7 @@ impl ArgType for CountArg {
                     }
                 },
                 ArgMatch::Contains(s) => {
+                    *used = true;
                     if definitions_allowed && count == 0 {
                         match s.parse() {
                             Ok(n) => count = n,
@@ -70,6 +72,7 @@ impl ArgType for CountArg {
                     // Maybe this can be tacked onto ArgTrait as a method?
                     // For now we'll just add an exception here though
                     if let Some(n) = argm.matches_shorts(text) {
+                        *used = true;
                         if definitions_allowed && count == 0 {
                             definitions_allowed = false;
                             count = n;
@@ -109,7 +112,7 @@ mod test {
 
     #[test]
     fn zero() {
-        assert_eq!(Ok(0), count_helper("--nothing --here"));
+        assert_eq!(Ok(0), count_helper("--nothing here"));
     }
 
     #[test]
@@ -171,5 +174,21 @@ mod test {
     fn mix_count_and_consecutive() {
         assert!(count_helper("--count=1 -cc").is_err());
     }
+
+    #[test]
+    fn bad_type() {
+        assert!(count_helper("--count=NaN").is_err());
+    }
+
+    #[test]
+    fn ignore_used() {
+        let mut argm: ArgM<CountArg> = ArgM::from("count", "");
+        let mut args = own("--count --count");
+        let res1 = argm.extract(&mut args);
+        assert_eq!(Ok(2), res1);
+        let res2 = argm.extract(&mut args);
+        assert_eq!(Ok(0), res2);
+    }
 }
+
 

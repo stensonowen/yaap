@@ -65,4 +65,24 @@ mod test {
     fn short() {
         assert_eq!(Ok(true), flag_helper("--something --to -f --here"));
     }
+
+    #[test]
+    fn contain() {
+        assert!(flag_helper("--flag=true").is_err());
+    }
+
+    #[test]
+    fn over_defined() {
+        assert!(flag_helper("--flag -f").is_err());
+    }
+
+    #[test]
+    fn ignore_used() {
+        let mut argm: ArgM<FlagArg> = ArgM::from("flag", "");
+        let mut args = own("--flag");
+        let res1 = argm.extract(&mut args);
+        assert_eq!(Ok(true), res1);
+        let res2 = argm.extract(&mut args);
+        assert_eq!(Ok(false), res2);
+    }
 }

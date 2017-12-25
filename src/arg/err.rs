@@ -1,7 +1,11 @@
 
 use std::fmt;
+use std::error::Error;
 
 pub type ArgResult<T> = Result<T, ArgError>;
+
+// should pretty much all ArgErrors contain the type information?
+// that might be helpful?
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
@@ -34,6 +38,21 @@ pub enum ArgError {
         // argument set multiple times unexpectedly
         long: &'static str,
     }
+}
+
+impl Error for ArgError {
+    fn description(&self) -> &str {
+        use self::ArgError::*;
+        match *self {
+            UnexpectedValue{..} => "Flags cannot have values",
+            MissingValue{..}    => "Values and Lists require at least one value",
+            MissingArg{..}      => "A required argument was omitted",
+            BadType{..}         => "Types must be properly derivable via FromStr",
+            BadTypeFree{..}     => "Free args must be of the proper type",
+            Repetition{..}      => "Arguments cannot be defined multiple times",
+        }
+    }
+    // I don't think `cause` should be implemented (?)
 }
 
 impl fmt::Display for ArgError {

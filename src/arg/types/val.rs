@@ -147,13 +147,15 @@ mod test {
         assert_eq!(Ok(Some(Color::Red)), val_helper("--val=r"));
         assert_eq!(Ok(Some(Color::Red)), val_helper("--val red"));
         assert!(val_helper::<Color>("--val=x").is_err());
+        assert!(val_helper::<Color>("--val y").is_err());
         assert!(val_helper::<Color>("--val re").is_err());
         assert!(val_helper::<Color>("--val redd").is_err());
     }
 
     #[test]
     fn over_defined() {
-        assert!(val_helper::<Color>("--foo --val blue --bar -v=blue --baz").is_err());
+        assert!(val_helper::<Color>("--val blue -v=blue").is_err());
+        assert!(val_helper::<Color>("--val=blue -v red").is_err());
     }
 
     #[test]
@@ -180,5 +182,16 @@ mod test {
         let mut args = own("--nothing -2 -c --here");
         assert_eq!(Ok(Some(Color::Green)), argm.extract(&mut args));
     }
+
+    #[test]
+    fn ignore_used() {
+        let mut argm: ArgM<ValArg<Color>> = ArgM::from("val", "");
+        let mut args = own("--val BLUE");
+        let res1 = argm.extract(&mut args);
+        assert_eq!(Ok(Some(Color::Blue)), res1);
+        let res2 = argm.extract(&mut args);
+        assert_eq!(Ok(None), res2);
+    }
+
 
 }
