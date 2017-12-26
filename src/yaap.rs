@@ -1,6 +1,7 @@
 
 use YaapArg;
-use arg::{ArgM, ArgType, FlagArg, CountArg, ValArg, ArgS, ArgError};
+use arg::{ArgM, ArgType, ArgS, ArgError};
+use arg::{FlagArg, CountArg, ValArg, ListArg};
 use std::{env, mem};
 
 /// State trait used for the Yaap builder pattern
@@ -124,6 +125,9 @@ impl Yaap<YaapArgs> {
             Err(e) => self.errs.push(e),
         }
         self
+    }
+    pub fn get_list<T: YaapArg>(self, result: &mut Vec<T>, argm: ArgM<ListArg<T>>) -> Self {
+        self.get_generic(result, argm)
     }
     pub fn finish(self) -> () {
         mem::forget(self.state);
