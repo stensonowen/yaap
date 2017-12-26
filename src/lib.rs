@@ -8,6 +8,9 @@ mod arg;
 mod yaap;
 mod impls;
 
+pub use arg::ArgM;
+pub use yaap::Yaap;
+
 /// Trait required for an object to be derivable from arguments
 pub trait YaapArg: Debug + FromStr {
     // associated const would be preferable but is unstable

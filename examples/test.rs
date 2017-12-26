@@ -1,5 +1,5 @@
 extern crate yaap;
-use yaap::{Yaap, Arg};
+use yaap::{Yaap, ArgM};
 
 #[derive(Debug, Default)]
 struct Args {
@@ -17,6 +17,10 @@ fn main() {
     //let mut args: Args;// = Args { 0, false, String::new, false, false, 0 };
     let mut args = Args::default();
 
+    Yaap::create()
+        .get_flag(&mut args.x, ArgM::from("x", "the exes"))
+        .finish();
+    /*
     Yaap::create()
         //.build()
         //.contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
@@ -36,4 +40,5 @@ fn main() {
     //println!("z: {:?}", args.z);
     //println!("b: {:?}", args.b);
     println!("{:?}", args);
+    */
 }
