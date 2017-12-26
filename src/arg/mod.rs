@@ -3,7 +3,9 @@ mod err;
 mod arg_s;
 mod types;
 
-pub(crate) use self::types::flag::FlagArg;
+// TODO not public
+pub use self::types::flag::FlagArg;
+//pub(crate) use self::types::flag::FlagArg;
 pub(crate) use self::types::count::CountArg;
 pub(crate) use self::types::val::ValArg;
 pub(crate) use self::arg_s::ArgS;
@@ -24,6 +26,12 @@ impl<T: ArgType> ArgM<T> {
             help, long,
             short: None,
             kind: T::default(),
+            //kind: T::empty(),
+        }
+    }
+    pub fn new(long: &'static str, help: &'static str) -> Self {
+        ArgM {
+            help, long, short: None, kind: T::empty()
         }
     }
     /// Supply a short (`char`) version that is used with one hyphen (e.g. `-v`)
@@ -82,6 +90,10 @@ pub trait ArgType: Default + Sized {
     /// Extract Contents from ArgS list, invalidate used ArgSs
     /// If an error is returned, no guarantees are made about the state of `args`
     fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Self::Contents>;
+
+    fn empty() -> Self {
+        Self::default()
+    }
 }
 
 /// How an ArgS can match an ArgM

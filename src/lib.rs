@@ -10,6 +10,7 @@ mod impls;
 
 pub use arg::ArgM;
 pub use yaap::Yaap;
+pub use arg::FlagArg; // TODO remove
 
 /// Trait required for an object to be derivable from arguments
 pub trait YaapArg: Debug + FromStr {
@@ -18,3 +19,16 @@ pub trait YaapArg: Debug + FromStr {
     fn type_name() -> &'static str;
 }
 
+
+/*
+fn foo() {
+    let mut x = false;
+    Yaap::create()
+        .transit()
+        //.get_flag(&mut args.x, ArgM::from("x", "the exes"))
+        //.get_flag(&mut args.x, ArgM::from::<FlagArg>("x", "the exes"))
+        .get_flag(&mut x, ArgM::<FlagArg>::from_("x", "the exes"))
+        ;
+        //.finish();
+}
+*/

@@ -1,5 +1,5 @@
 extern crate yaap;
-use yaap::{Yaap, ArgM};
+use yaap::{Yaap, ArgM, FlagArg};
 
 #[derive(Debug, Default)]
 struct Args {
@@ -18,8 +18,14 @@ fn main() {
     let mut args = Args::default();
 
     Yaap::create()
-        .get_flag(&mut args.x, ArgM::from("x", "the exes"))
-        .finish();
+        .transit()
+        //.get_flag(&mut args.x, ArgM::from("x", "the exes"))
+        //.get_flag(&mut args.x, ArgM::from::<FlagArg>("x", "the exes"))
+        //.get_flag(&mut args.x, ArgM::<FlagArg>::from("x", "the exes"))
+        //.get_flag(&mut args.x, ArgM::<FlagArg>::from_("x", "the exes"))
+        .get_flag(&mut args.x, ArgM::new("x", "the exes"))
+        ;
+        //.finish();
     /*
     Yaap::create()
         //.build()

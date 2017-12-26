@@ -83,10 +83,15 @@ impl Yaap<YaapOpts> {
     }
 
     // transition to Yaap<YaapArgs>
+    pub fn transit(self) -> Yaap<YaapArgs> {
+        self.into()
+    }
+    /*
     pub fn get_flag(self, result: &mut bool, argm: ArgM<FlagArg>) -> Yaap<YaapArgs> {
         let this: Yaap<YaapArgs> = self.into();
         this.get_flag(result, argm)
     }
+    */
 
     // transition to Yaap<YaapDone>
     // TODO collect_free_args, finish
