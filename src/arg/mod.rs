@@ -3,9 +3,7 @@ mod err;
 mod arg_s;
 mod types;
 
-// TODO not public
-pub use self::types::flag::FlagArg;
-//pub(crate) use self::types::flag::FlagArg;
+pub(crate) use self::types::flag::FlagArg;
 pub(crate) use self::types::count::CountArg;
 pub(crate) use self::types::val::ValArg;
 pub(crate) use self::arg_s::ArgS;

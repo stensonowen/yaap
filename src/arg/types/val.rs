@@ -19,11 +19,11 @@ impl<T: YaapArg> Default for ValArg<T> {
 }
 
 impl<T: YaapArg> ArgM<ValArg<T>> {
-    fn with_default(mut self, d: T) -> Self {
+    pub fn with_default(mut self, d: T) -> Self {
         self.kind.default = Some(d);
         self
     }
-    fn is_required(mut self) -> Self {
+    pub fn is_required(mut self) -> Self {
         self.kind.required = true;
         self
     }

@@ -7,20 +7,19 @@ use std::{env, mem};
 pub trait BuilderState {}
 
 /// State of Yaap builder in which options can be specified (e.g. version)
-#[derive(Debug)] #[must_use] pub struct YaapOpts;
+#[derive(Debug)] pub struct YaapOpts;
 
 /// State of Yaap builder in which arguments can be extracted
-#[derive(Debug)] #[must_use] pub struct YaapArgs;
-
-/// Final state of Yaap builder in which errors are reported
-#[derive(Debug)] pub struct YaapDone;
+#[derive(Debug)] pub struct YaapArgs;
 
 impl BuilderState for YaapOpts {}
 impl BuilderState for YaapArgs {}
-impl BuilderState for YaapDone {}
 
 /// Argument parser object: aggregate errors and store help message info
+// I should be able to `#[deny(unused_must_use)]`, right?
+// Making forgetting `.finish()` an error instead of a warning?
 #[derive(Debug)]
+#[must_use = "Remember to call `.finish()`"]
 pub struct Yaap<T: BuilderState> {
     /// Arguments entered by the user
     argv: Vec<ArgS>,
@@ -82,16 +81,21 @@ impl Yaap<YaapOpts> {
         self.help = Some(h); self
     }
 
-    // transition to Yaap<YaapArgs>
-    pub fn transit(self) -> Yaap<YaapArgs> {
-        self.into()
-    }
-    /*
+    // "automatically" transition to Yaap<YaapArgs>
     pub fn get_flag(self, result: &mut bool, argm: ArgM<FlagArg>) -> Yaap<YaapArgs> {
         let this: Yaap<YaapArgs> = self.into();
         this.get_flag(result, argm)
     }
-    */
+
+    pub fn get_count(self, result: &mut u8, argm: ArgM<CountArg>) -> Yaap<YaapArgs> {
+        let this: Yaap<YaapArgs> = self.into();
+        this.get_count(result, argm)
+    }
+
+    pub fn get_val<T: YaapArg>(self, result: &mut T, argm: ArgM<ValArg<T>>) -> Yaap<YaapArgs> {
+        let this: Yaap<YaapArgs> = self.into();
+        this.get_val(result, argm)
+    }
 
     // transition to Yaap<YaapDone>
     // TODO collect_free_args, finish
@@ -121,6 +125,11 @@ impl Yaap<YaapArgs> {
         }
         self
     }
+    pub fn finish(self) -> () {
+        mem::forget(self.state);
+        ()
+    }
+
 }
 
 // boring bookkeeping: drop bomb and state transitions
@@ -152,23 +161,6 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
             vers: old.vers,
             help: old.help,
             state: YaapArgs
-        }
-    }
-}
-
-impl From<Yaap<YaapArgs>> for Yaap<YaapDone> {
-    fn from(old: Yaap<YaapArgs>) -> Yaap<YaapDone> {
-        mem::forget(old.state);
-        Yaap {
-            argv: old.argv,
-            errs: old.errs,
-            free: old.free,
-            name: old.name,
-            auth: old.auth,
-            desc: old.desc,
-            vers: old.vers,
-            help: old.help,
-            state: YaapDone
         }
     }
 }

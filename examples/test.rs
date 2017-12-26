@@ -1,50 +1,24 @@
 extern crate yaap;
-use yaap::{Yaap, ArgM, FlagArg};
+use yaap::{Yaap, ArgM};
 
 #[derive(Debug, Default)]
 struct Args {
-    a: u8,
-    b: bool,
-    c: String,
-
-    w: Vec<i32>,
-    x: bool,
     y: bool,
-    z: usize,
+    v: u8,
+    f: f64,
 }
 
 fn main() {
-    //let mut args: Args;// = Args { 0, false, String::new, false, false, 0 };
+    //let mut args: Args = unsafe { ::std::mem::zeroed() }; // less safe alt
     let mut args = Args::default();
 
     Yaap::create()
-        .transit()
-        //.get_flag(&mut args.x, ArgM::from("x", "the exes"))
-        //.get_flag(&mut args.x, ArgM::from::<FlagArg>("x", "the exes"))
-        //.get_flag(&mut args.x, ArgM::<FlagArg>::from("x", "the exes"))
-        //.get_flag(&mut args.x, ArgM::<FlagArg>::from_("x", "the exes"))
-        .get_flag(&mut args.x, ArgM::new("x", "the exes"))
-        ;
-        //.finish();
-    /*
-    Yaap::create()
-        //.build()
-        //.contains(&mut args.x, Arg::<FlagArg>::new("x", "the exes"))
-        .contains(&mut args.x, Arg::from("x", "the exes"))
-        .count(&mut args.z, Arg::from("omega", "zzz top")
-               .with_short('z')
-               )
-        //.extract_val(&mut args.a, Args::from("alpha", "first").with_short('a').with_default(42))
-        .extract_val(&mut args.a, Arg::from("alpha", "first").with_default(42))
-        .extract_val(&mut args.b, Arg::from("bool", "a boolean"))
-        //.extract_list(&mut args.w, Arg::from("nums", "nummms"))
-        .finish()
-        ;
+        .get_flag(&mut args.y, ArgM::new("yes", "Don't prompt").with_short('y'))
+        .get_count(&mut args.v,ArgM::new("verbose", "Verbosity level").with_short('v'))
+        .get_val(&mut args.f,  ArgM::new("value", "Some value")
+                 .with_default(42.)
+                 .is_required())
+        .finish();
 
-    //println!("w: {:?}", args.w);
-    //println!("x: {:?}", args.x);
-    //println!("z: {:?}", args.z);
-    //println!("b: {:?}", args.b);
     println!("{:?}", args);
-    */
 }

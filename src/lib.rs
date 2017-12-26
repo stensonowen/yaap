@@ -1,5 +1,5 @@
 //! A safe and extensible arg-parsing framework
-#![allow(dead_code)]
+#![allow(dead_code)] // TODO remove
 
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -10,7 +10,6 @@ mod impls;
 
 pub use arg::ArgM;
 pub use yaap::Yaap;
-pub use arg::FlagArg; // TODO remove
 
 /// Trait required for an object to be derivable from arguments
 pub trait YaapArg: Debug + FromStr {
@@ -19,16 +18,14 @@ pub trait YaapArg: Debug + FromStr {
     fn type_name() -> &'static str;
 }
 
+/* Don't forget TODO
+ *  Subcommands (impl main functionality via wrappers around this?)
+ *  DashArg? `vim -`?
+ *  Use OsStr optionally? Don't require FromStr?
+ *      Currently can't parse bad utf-8 `Path`s as args :/
+ *      `impl<T: From<[u8]> YaapArg for T`? Not ideal
+ *      Possible to do this iff FromStr unimplemented?
+ *
+ *
+ */
 
-/*
-fn foo() {
-    let mut x = false;
-    Yaap::create()
-        .transit()
-        //.get_flag(&mut args.x, ArgM::from("x", "the exes"))
-        //.get_flag(&mut args.x, ArgM::from::<FlagArg>("x", "the exes"))
-        .get_flag(&mut x, ArgM::<FlagArg>::from_("x", "the exes"))
-        ;
-        //.finish();
-}
-*/
