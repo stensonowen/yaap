@@ -2,9 +2,9 @@
 
 ### Pronounced 'YAWP'. Barbarically if possible.
 
-I'd use clap but I'm allergic to `unwrap`s and I'd use docopt but I'm allergic to funky macros.
+I like [`clap`](https://clap.rs) but I'm allergic to `unwrap`s and I'd use [`docopt`](https://github.com/docopt/docopt.rs) but I'm afraid of macro black magic.
 
-It's a middle ground between [`clap`](https://clap.rs), which is really nicely customizable but seems to not use the type system very extensively, and [`docopt`](https://github.com/docopt/docopt.rs), which makes nice guarantees about the types of its results but is a little opaque and awkward to use (or be certain it's configured properly).
+This is meant to be a middle ground that is intuitively customizable and uses the type system. 
 
 Overall, this should make parsing arguments relatively hard to fuck up.
 
@@ -30,7 +30,7 @@ The following would be compile-time errors:
 
 The following are runtime errors:
 
-* Forgetting to call `.finish()`
+* Forgetting to call `.finish()` (which is a compile warning)
 * Nothing else
 
 ## Why tf do I need another arg parser?

@@ -23,7 +23,7 @@ impl<T: YaapArg> ArgM<ValArg<T>> {
         self.kind.default = Some(d);
         self
     }
-    pub fn is_required(mut self) -> Self {
+    pub fn required(mut self) -> Self {
         self.kind.required = true;
         self
     }
@@ -37,7 +37,7 @@ impl<T: YaapArg> ArgType for ValArg<T> {
         let mut expecting = false;
         for &mut ArgS { ref text, ref mut used } in args.iter_mut() {
             if *used {
-                continue
+                //continue
             } else if expecting {
                 expecting = false;
                 *used = true;
@@ -171,7 +171,7 @@ mod test {
 
     #[test]
     fn mandatory() {
-        let mut argm: ArgM<ValArg<Color>> = ArgM::from("val", "").is_required();
+        let mut argm: ArgM<ValArg<Color>> = ArgM::from("val", "").required();
         let mut args = own("--nothing -2 -c --here");
         assert!(argm.extract(&mut args).is_err());
     }

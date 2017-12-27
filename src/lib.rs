@@ -10,6 +10,7 @@ mod impls;
 
 pub use arg::ArgM;
 pub use yaap::Yaap;
+pub use arg::Requirable;
 
 /// Trait required for an object to be derivable from arguments
 pub trait YaapArg: Debug + FromStr {
@@ -18,14 +19,17 @@ pub trait YaapArg: Debug + FromStr {
     fn type_name() -> &'static str;
 }
 
-/* Don't forget TODO
+/* Don't forget TODO these
  *  Subcommands (impl main functionality via wrappers around this?)
  *  DashArg? `vim -`?
+ *      Or some option to take in stdin? `cat`?
  *  Use OsStr optionally? Don't require FromStr?
  *      Currently can't parse bad utf-8 `Path`s as args :/
  *      `impl<T: From<[u8]> YaapArg for T`? Not ideal
  *      Possible to do this iff FromStr unimplemented?
- *
+ *  Make CountArg/ListArg requirable?
+ *      Can maybe not break type inference with a Requirable trait?
+ *      Effect of omitting these is value- not type-level so don't really care
  *
  */
 

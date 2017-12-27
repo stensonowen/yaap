@@ -1,5 +1,6 @@
 extern crate yaap;
 use yaap::{Yaap, ArgM};
+use yaap::Requirable;
 
 #[derive(Debug, Default)]
 struct Args {
@@ -14,10 +15,11 @@ fn main() {
 
     Yaap::create()
         .get_flag(&mut args.y, ArgM::new("yes", "Don't prompt").with_short('y'))
-        .get_count(&mut args.v,ArgM::new("verbose", "Verbosity level").with_short('v'))
+        .get_count(&mut args.v,ArgM::new("verbose", "Verbosity level").with_short('v').require())
         .get_val(&mut args.f,  ArgM::new("value", "Some value")
                  .with_default(42.)
-                 .is_required())
+                 .require())
+                 //.required())
         .finish();
 
     println!("{:?}", args);

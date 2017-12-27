@@ -79,7 +79,8 @@ impl<T: YaapArg> ArgType for ListArg<T> {
         for &mut ArgS { ref text, ref mut used } in args.iter_mut() {
             if *used {
                 continue
-            } else if expecting == Perhaps::Yes {
+            } 
+            if expecting == Perhaps::Yes {
                 expecting = Perhaps::Maybe;
                 *used = true;
                 try_parse(text)
@@ -89,7 +90,8 @@ impl<T: YaapArg> ArgType for ListArg<T> {
                         exp_type: T::type_name()
                     })?;
                 continue
-            } else if expecting == Perhaps::Maybe {
+            } 
+            if expecting == Perhaps::Maybe {
                 if let Some(mut v) = try_parse(text) {
                     *used = true;
                     result.append(&mut v);

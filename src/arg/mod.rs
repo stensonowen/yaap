@@ -12,6 +12,7 @@ pub(crate) use self::err::ArgError;
 use self::err::ArgResult;
 
 /// Argument matcher: contains usage data
+#[derive(Debug, Default)]
 pub struct ArgM<T: ArgType> {
     help: &'static str,
     long: &'static str,
@@ -91,7 +92,7 @@ pub trait ArgType: Default + Sized {
 
 }
 
-/// How an ArgS can match an ArgM
+/// How an `ArgS` can match an `ArgM`
 #[derive(Debug, PartialEq)]
 pub(crate) enum ArgMatch<'a> {
     // irrelevant
@@ -100,6 +101,23 @@ pub(crate) enum ArgMatch<'a> {
     Match,
     // contained match, e.g. `--foo=bar`
     Contains(&'a str),
+}
+
+pub trait Requirable {
+    fn require(self) -> Self;
+}
+
+use YaapArg;
+impl<T: YaapArg> Requirable for ArgM<ValArg<T>> {
+    fn require(self) -> Self {
+        self.required()
+    }
+}
+impl Requirable for ArgM<CountArg> {
+    fn require(self) -> Self {
+        //self.required()
+        self
+    }
 }
 
 mod test {

@@ -155,7 +155,8 @@ impl Drop for YaapArgs {
 impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
     fn from(old: Yaap<YaapOpts>) -> Yaap<YaapArgs> {
         mem::forget(old.state);
-        Yaap {
+
+        let mut this = Yaap {
             argv: old.argv,
             errs: old.errs,
             free: old.free,
@@ -165,7 +166,30 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
             vers: old.vers,
             help: old.help,
             state: YaapArgs
+        };
+
+        // check for help flag before looking at any other args
+        let mut help_flag = false;
+        let help_arg = ArgM::new("help", "Print this message").with_short('h');
+        this = this.get_flag(&mut help_flag, help_arg);
+        if help_flag {
+            panic!("usage");
         }
+
+        // next check for version flag before continuing
+        // uhhh, should I do this?? maybe it shouldn't be mandatory?
+        // maybe there should be a way to specify the version without this check?
+        // TODO think about this
+        if let Some(v) = this.vers {
+            let mut vers_flag = false;
+            let vers_arg = ArgM::new("version", "Print version info");
+            this = this.get_flag(&mut vers_flag, vers_arg);
+            if vers_flag {
+                panic!("Version: {}", v);
+            }
+        }
+
+        this
     }
 }
 
