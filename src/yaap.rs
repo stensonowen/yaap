@@ -2,6 +2,7 @@
 use YaapArg;
 use arg::{ArgM, ArgType, ArgS, ArgError};
 use arg::{FlagArg, CountArg, ValArg, ListArg};
+use arg::{RequiredVal, OptionalVal, ValType};
 use std::{env, mem};
 
 /// State trait used for the Yaap builder pattern
@@ -93,10 +94,12 @@ impl Yaap<YaapOpts> {
         this.get_count(result, argm)
     }
 
+    /*
     pub fn get_val<T: YaapArg>(self, result: &mut T, argm: ArgM<ValArg<T>>) -> Yaap<YaapArgs> {
         let this: Yaap<YaapArgs> = self.into();
         this.get_val(result, argm)
     }
+    */
 
     // transition to Yaap<YaapDone>
     // TODO collect_free_args, finish
@@ -118,6 +121,7 @@ impl Yaap<YaapArgs> {
     pub fn get_count(self, result: &mut u8, argm: ArgM<CountArg>) -> Self {
         self.get_generic(result, argm)
     }
+    /*
     pub fn get_val<T: YaapArg>(mut self, result: &mut T, mut argm: ArgM<ValArg<T>>) -> Self {
         match argm.extract(&mut self.argv) {
             Ok(Some(r)) => *result = r,
@@ -126,6 +130,21 @@ impl Yaap<YaapArgs> {
         }
         self
     }
+    */
+    pub fn get_val_opt<T: YaapArg>(self, 
+                               result: &mut Option<T>, 
+                               argm: ArgM<ValArg<OptionalVal, T>>) -> Self 
+    {
+        self.get_generic(result, argm)
+    }
+    /*
+    pub fn get_val<S: ValType<T>, T: YaapArg>(self, 
+                               result: &mut T, 
+                               argm: ArgM<ValArg<S, T>>) -> Self where ValArg<S,T>: ArgType 
+    {
+        self.get_generic(result, argm)
+    }
+    */
     pub fn get_list<T: YaapArg>(self, result: &mut Vec<T>, argm: ArgM<ListArg<T>>) -> Self {
         self.get_generic(result, argm)
     }

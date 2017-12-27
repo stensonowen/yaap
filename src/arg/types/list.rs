@@ -18,6 +18,7 @@ pub struct ListArg<T: YaapArg> {
     required: bool,
 }
 
+/*
 impl<T: YaapArg> Default for ListArg<T> {
     fn default() -> Self {
         ListArg {
@@ -26,6 +27,7 @@ impl<T: YaapArg> Default for ListArg<T> {
         }
     }
 }
+*/
 
 impl<T: YaapArg> Requirable for ListArg<T> {
     fn set_required(&mut self) {
@@ -80,6 +82,13 @@ fn try_parse<T: YaapArg>(s: &str) -> Option<Vec<T>> {
 
 impl<T: YaapArg> ArgType for ListArg<T> {
     type Contents = Vec<T>;
+
+    fn new() -> Self {
+        ListArg {
+            kind: PhantomData,
+            required: false,
+        }
+    }
 
     fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Vec<T>> {
         // keep track of whether the next argument can/should be a match

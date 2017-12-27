@@ -33,6 +33,22 @@ pub trait YaapArg: Debug + FromStr {
  *  Free arg numbering? With types and everything?
  *      Can assert first free arg is T and second is U? and extract that way?
  *  ValArg should return a T or Option<T> depending on if it's required
- *
+ *      2 ways we can do this:
+ *          Easy way: 2 different types, OptValArg and ReqValArg
+ *              pretty much the same except OptValArg::Contents is `Option<T>` not `T`
+ *              compiler infers which to use based on return value
+ *              would mean `Option<T>` can't be derived + mandatory itself, but I
+ *               think that's impossible anyway (because you can't impl FromStr for it
+ *              might be awkward because neither could support `.required()`
+ *          Cooler way: ValArg generic over extra trait ValType
+ *              by default it's ValArg<Optional>, unless you call `.required()`
+ *               in which case it becomes ValArg<Required>
+ *              type of .extract() depends on ValArg.kind
+ *              so then `.extract(&mut T, ArgM::new().required())` is sound and 
+ *                      `.extract(&mut Option<T>, ArgM::new())` is sound but
+ *                      `.extract(&mut T, ArgM::new())` is not and neither is
+ *                      `.extract(&mut Option<T>, ArgM::new().required())`
+ *               which would be pretty cool
+ *              
  */
 
