@@ -7,7 +7,7 @@ use YaapArg;
 use arg::{ArgM, ArgS, ArgType, ArgMatch, Requirable};
 use arg::err::{ArgError, ArgResult};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CountArg {
     //max: Option<u8>,
     required: bool,
@@ -36,13 +36,6 @@ impl ArgM<CountArg> {
 
 impl ArgType for CountArg {
     type Contents = u8;
-
-    fn new() -> Self {
-        CountArg {
-            required: false,
-        }
-    }
-
     fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Self::Contents> {
         let mut count = 0;
         let mut definitions_allowed = true;

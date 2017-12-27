@@ -3,82 +3,38 @@ use YaapArg;
 use arg::{ArgS, ArgM, ArgType, ArgMatch, Requirable};
 use arg::err::{ArgError, ArgResult};
 
-use std::marker::PhantomData;
-
-// ValArg starts out as an OptionalVal, which has an AT of Option<T>
-// It can either be given a default value or be marked required, but not both
-// Both variants have an AT of T
-
-/// Different types of a ValArg
-pub trait ValType<T: YaapArg> {
-    fn get_default(self) -> Option<T>;
-}
-
-/// Starting kind of a ValArg: has no default value and is not required
-#[derive(Debug)] pub struct OptionalVal;
-/// Required variant of ValArg: guarantees something is returned
-#[derive(Debug)] pub struct RequiredVal;
-/// ValArg variant with a default value: guarantees something is returned
-#[derive(Debug)] pub struct DefaultVal<T: YaapArg>(T);
-
-impl<T: YaapArg> ValType<T> for OptionalVal {
-    fn get_default(self) -> Option<T> { None }
-}
-impl<T: YaapArg> ValType<T> for RequiredVal {
-    fn get_default(self) -> Option<T> { None }
-}
-impl<T: YaapArg> ValType<T> for DefaultVal<T> {
-    fn get_default(self) -> Option<T> { Some(self.0) }
-}
-
-/*
-impl<T: YaapArg> Default for DefaultVal<T> {
-    fn default() -> Self {
-        DefaultVal(None)
-    }
-}
-*/
-
 #[derive(Debug)]
-pub struct ValArg<S: ValType<T>, T: YaapArg> {
-//pub struct ValArg<T: YaapArg> {
-    data: PhantomData<T>,
-    kind: S,
-    //kind: Box<ValType<T>>,
+pub struct ValArg<T: YaapArg> {
+    default: Option<T>,
+    required: bool,
 }
 
-/*
-impl<S: ValType<T>, T: YaapArg> Default for ValArg<S, T> {
+impl<T: YaapArg> Default for ValArg<T> {
     fn default() -> Self {
         ValArg {
-            data: PhantomData,
-            //kind: OptionalVal,
-            kind: S::default(),
+            default: None,
+            required: false,
         }
     }
 }
-*/
 
-impl<T: YaapArg> Requirable for ValArg<OptionalVal, T> {
+impl<T: YaapArg> Requirable for ValArg<T> {
     fn set_required(&mut self) {
-        //self.kind = RequiredVal;
-        unimplemented!()
-        //self.required = true;
+        self.required = true;
     }
 }
 
-/*
- * Which one should have a default?
-impl<T: YaapArg> ArgM<ValArg<RequiredVal, T>> {
+impl<T: YaapArg> ArgM<ValArg<T>> {
     pub fn with_default(mut self, d: T) -> Self {
         self.kind.default = Some(d);
         self
     }
 }
-*/
-impl<S: ValType<T>, T: YaapArg> ArgM<ValArg<S, T>> where ValArg<S,T>: ArgType {
-    // helper to be called by different ValTypes
-    fn try_extract(&mut self, args: &mut Vec<ArgS>) -> ArgResult<Option<T>> {
+
+impl<T: YaapArg> ArgType for ValArg<T> {
+    type Contents = Option<T>;
+
+    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Option<T>> {
         let mut result: Option<T> = None;
         let mut expecting = false;
         for &mut ArgS { ref text, ref mut used } in args.iter_mut() {
@@ -90,16 +46,16 @@ impl<S: ValType<T>, T: YaapArg> ArgM<ValArg<S, T>> where ValArg<S,T>: ArgType {
                 match text.parse() {
                     Ok(x) => result = Some(x),
                     Err(_) => return Err(ArgError::BadType {
-                        long: self.long, attempt: text.to_string(),
+                        long: argm.long, attempt: text.to_string(),
                         exp_type: T::type_name(),
                     })
                 }
             } else {
-                match self.matches(text) {
+                match argm.matches(text) {
                     ArgMatch::Match => {
                         *used = true;
                         if result.is_some() {
-                            return Err(ArgError::Repetition{long: self.long})
+                            return Err(ArgError::Repetition{long: argm.long})
                         } else {
                             expecting = true;
                         }
@@ -107,12 +63,12 @@ impl<S: ValType<T>, T: YaapArg> ArgM<ValArg<S, T>> where ValArg<S,T>: ArgType {
                     ArgMatch::Contains(s) => {
                         *used = true;
                         if result.is_some() {
-                            return Err(ArgError::Repetition{long: self.long})
+                            return Err(ArgError::Repetition{long: argm.long})
                         } else {
                             match s.parse() {
                                 Ok(x) => result = Some(x),
                                 Err(_) => return Err(ArgError::BadType {
-                                    long: self.long, attempt: text.to_string(),
+                                    long: argm.long, attempt: text.to_string(),
                                     exp_type: T::type_name()
                                 })
                             }
@@ -124,10 +80,16 @@ impl<S: ValType<T>, T: YaapArg> ArgM<ValArg<S, T>> where ValArg<S,T>: ArgType {
         }
         if expecting {
             // still expecting an argument
-            Err(ArgError::MissingValue { long: self.long })
+            Err(ArgError::MissingValue { long: argm.long })
         } else if let Some(res) = result {
             // successfully extracted single val
             Ok(Some(res))
+        } else if let Some(d) = argm.kind.default.take() {
+            // no val but valid default value
+            Ok(Some(d))
+        } else if argm.kind.required {
+            // throw error if arg is required but absent
+            Err(ArgError::MissingArg { long: argm.long })
         } else {
             // otherwise, no arg present
             Ok(None)
@@ -135,48 +97,6 @@ impl<S: ValType<T>, T: YaapArg> ArgM<ValArg<S, T>> where ValArg<S,T>: ArgType {
     }
 }
 
-impl<T: YaapArg> ArgType for ValArg<OptionalVal, T> {
-    type Contents = Option<T>;
-
-    fn new() -> Self {
-        ValArg {
-            data: PhantomData,
-            kind: OptionalVal,
-        }
-    }
-
-    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Option<T>> {
-        argm.try_extract(args)
-    }
-}
-
-impl<T: YaapArg> ArgType for ValArg<RequiredVal, T> {
-    type Contents = T;
-
-    fn new() -> Self {
-        unreachable!()
-    }
-
-    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<T> {
-        match argm.try_extract(args) {
-            Err(e) => Err(e),
-            Ok(Some(t)) => Ok(t),
-            Ok(None) => Err(ArgError::MissingArg { long: argm.long }),
-        }
-    }
-}
-
-impl<T: YaapArg> ArgType for ValArg<DefaultVal<T>, T> {
-    type Contents = T;
-
-    fn new() -> Self {
-        unreachable!()
-    }
-
-    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<T> {
-        unimplemented!()
-    }
-}
 
 #[cfg(test)]
 mod test {

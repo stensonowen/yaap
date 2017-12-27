@@ -5,7 +5,7 @@ mod types;
 
 pub(crate) use self::types::flag::FlagArg;
 pub(crate) use self::types::count::CountArg;
-pub(crate) use self::types::val::{ValArg, ValType, OptionalVal, RequiredVal};
+pub(crate) use self::types::val::ValArg;
 pub(crate) use self::types::list::ListArg;
 pub(crate) use self::arg_s::ArgS;
 pub(crate) use self::err::ArgError;
@@ -13,7 +13,7 @@ use self::err::ArgResult;
 
 
 /// Argument matcher: contains usage data
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ArgM<T: ArgType> {
     help: &'static str,
     long: &'static str,
@@ -26,12 +26,12 @@ impl<T: ArgType> ArgM<T> {
         ArgM {
             help, long,
             short: None,
-            kind: T::new(),
+            kind: T::default(),
         }
     }
     pub fn new(long: &'static str, help: &'static str) -> Self {
         ArgM {
-            help, long, short: None, kind: T::new()
+            help, long, short: None, kind: T::default()
         }
     }
     /// Supply a short (`char`) version that is used with one hyphen (e.g. `-v`)
@@ -84,12 +84,9 @@ impl<T: ArgType> ArgM<T> {
 
 
 /// Different kinds of argument matchers (e.g. flag or value)
-pub trait ArgType: Sized {
+pub trait ArgType: Default + Sized {
     /// The return type of a match (e.g. boolean for a flag)
     type Contents; // better name?
-
-    /// Create empty
-    fn new() -> Self;
 
     /// Extract Contents from ArgS list, invalidate used ArgSs
     /// If an error is returned, no guarantees are made about the state of `args`

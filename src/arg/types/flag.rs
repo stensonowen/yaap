@@ -2,15 +2,11 @@
 use arg::{ArgS, ArgM, ArgType, ArgMatch};
 use arg::err::{ArgError, ArgResult};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FlagArg;
 
 impl ArgType for FlagArg {
     type Contents = bool;
-
-    fn new() -> Self {
-        FlagArg
-    }
 
     fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<bool> {
         let mut result = false;
