@@ -33,6 +33,7 @@ pub trait YaapArg: Debug + FromStr {
  *  Free arg numbering? With types and everything?
  *      Can assert first free arg is T and second is U? and extract that way?
  *  ValArg should return a T or Option<T> depending on if it's required
+ *  Uhh make sure the `mut` in ArgType is actually still necessary (?)
  *
  */
 

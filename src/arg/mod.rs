@@ -3,9 +3,12 @@ mod err;
 mod arg_s;
 mod types;
 
+use YaapArg;
+
 pub(crate) use self::types::flag::FlagArg;
 pub(crate) use self::types::count::CountArg;
 pub(crate) use self::types::val::ValArg;
+pub(crate) use self::types::valopt::ValOptArg;
 pub(crate) use self::types::list::ListArg;
 pub(crate) use self::arg_s::ArgS;
 pub(crate) use self::err::ArgError;
@@ -21,6 +24,28 @@ pub struct ArgM<T: ArgType> {
     kind: T,
 }
 
+// impl `new()` for everything except ValArg, which can only be created from ValOptArg
+impl ArgM<FlagArg> {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
+        ArgM { help, long, short: None, kind: FlagArg::default(), }
+    }
+}
+impl ArgM<CountArg> {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
+        ArgM { help, long, short: None, kind: CountArg::default(), }
+    }
+}
+impl<T: YaapArg> ArgM<ValOptArg<T>> {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
+        ArgM { help, long, short: None, kind: ValOptArg::default(), }
+    }
+}
+impl<T: YaapArg> ArgM<ListArg<T>> {
+    pub fn new(long: &'static str, help: &'static str) -> Self {
+        ArgM { help, long, short: None, kind: ListArg::default(), }
+    }
+}
+
 impl<T: ArgType> ArgM<T> {
     fn from(long: &'static str, help: &'static str) -> Self {
         ArgM {
@@ -29,11 +54,13 @@ impl<T: ArgType> ArgM<T> {
             kind: T::default(),
         }
     }
+    /*
     pub fn new(long: &'static str, help: &'static str) -> Self {
         ArgM {
             help, long, short: None, kind: T::default()
         }
     }
+    */
     /// Supply a short (`char`) version that is used with one hyphen (e.g. `-v`)
     pub fn with_short(mut self, short: char) -> Self {
         self.short = Some(short);

@@ -1,98 +1,55 @@
 
 use YaapArg;
-use arg::{ArgS, ArgM, ArgType, ArgMatch, Requirable};
+use arg::{ArgS, ArgM, ArgType, Requirable, ValOptArg};
 use arg::err::{ArgError, ArgResult};
 
 #[derive(Debug)]
 pub struct ValArg<T: YaapArg> {
     default: Option<T>,
-    required: bool,
+}
+
+impl<T: YaapArg> ValArg<T> {
+    pub(crate) fn from(t: Option<T>) -> Self {
+        ValArg { default: t }
+    }
 }
 
 impl<T: YaapArg> Default for ValArg<T> {
     fn default() -> Self {
-        ValArg {
-            default: None,
-            required: false,
-        }
+        ValArg { default: None, }
     }
 }
 
 impl<T: YaapArg> Requirable for ValArg<T> {
     fn set_required(&mut self) {
-        self.required = true;
+        // TODO this must be reworked
+        unimplemented!()
+        //self.required = true;
     }
 }
 
+/*
 impl<T: YaapArg> ArgM<ValArg<T>> {
     pub fn with_default(mut self, d: T) -> Self {
         self.kind.default = Some(d);
         self
     }
 }
+*/
 
 impl<T: YaapArg> ArgType for ValArg<T> {
-    type Contents = Option<T>;
+    type Contents = T;
 
-    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Option<T>> {
-        let mut result: Option<T> = None;
-        let mut expecting = false;
-        for &mut ArgS { ref text, ref mut used } in args.iter_mut() {
-            if *used {
-                //continue
-            } else if expecting {
-                expecting = false;
-                *used = true;
-                match text.parse() {
-                    Ok(x) => result = Some(x),
-                    Err(_) => return Err(ArgError::BadType {
-                        long: argm.long, attempt: text.to_string(),
-                        exp_type: T::type_name(),
-                    })
-                }
-            } else {
-                match argm.matches(text) {
-                    ArgMatch::Match => {
-                        *used = true;
-                        if result.is_some() {
-                            return Err(ArgError::Repetition{long: argm.long})
-                        } else {
-                            expecting = true;
-                        }
-                    },
-                    ArgMatch::Contains(s) => {
-                        *used = true;
-                        if result.is_some() {
-                            return Err(ArgError::Repetition{long: argm.long})
-                        } else {
-                            match s.parse() {
-                                Ok(x) => result = Some(x),
-                                Err(_) => return Err(ArgError::BadType {
-                                    long: argm.long, attempt: text.to_string(),
-                                    exp_type: T::type_name()
-                                })
-                            }
-                        }
-                    },
-                    ArgMatch::NoMatch => {},
-                }
-            }
-        }
-        if expecting {
-            // still expecting an argument
-            Err(ArgError::MissingValue { long: argm.long })
-        } else if let Some(res) = result {
-            // successfully extracted single val
-            Ok(Some(res))
-        } else if let Some(d) = argm.kind.default.take() {
-            // no val but valid default value
-            Ok(Some(d))
-        } else if argm.kind.required {
-            // throw error if arg is required but absent
-            Err(ArgError::MissingArg { long: argm.long })
-        } else {
-            // otherwise, no arg present
-            Ok(None)
+    fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<T> {
+        let mut argm_opt = ArgM::<ValOptArg<T>> {
+            long: argm.long, short: argm.short.clone(),
+            help: argm.help, kind: ValOptArg::default(), 
+        };
+
+        match ValOptArg::extract(&mut argm_opt, args) {
+            Err(e) => Err(e),
+            Ok(Some(t)) => Ok(t),
+            Ok(None) => Err(ArgError::MissingArg { long: argm.long }),
         }
     }
 }

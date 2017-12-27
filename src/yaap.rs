@@ -1,7 +1,7 @@
 
 use YaapArg;
 use arg::{ArgM, ArgType, ArgS, ArgError};
-use arg::{FlagArg, CountArg, ValArg, ListArg};
+use arg::{FlagArg, CountArg, ValArg, ValOptArg, ListArg};
 use std::{env, mem};
 
 /// State trait used for the Yaap builder pattern
@@ -98,6 +98,12 @@ impl Yaap<YaapOpts> {
         this.get_val(result, argm)
     }
 
+    pub fn get_val_opt<T: YaapArg>(self, result: &mut Option<T>, 
+                                   argm: ArgM<ValOptArg<T>>) -> Yaap<YaapArgs> {
+        let this: Yaap<YaapArgs> = self.into();
+        this.get_val_opt(result, argm)
+    }
+
     // transition to Yaap<YaapDone>
     // TODO collect_free_args, finish
 
@@ -118,15 +124,15 @@ impl Yaap<YaapArgs> {
     pub fn get_count(self, result: &mut u8, argm: ArgM<CountArg>) -> Self {
         self.get_generic(result, argm)
     }
-    pub fn get_val<T: YaapArg>(mut self, result: &mut T, mut argm: ArgM<ValArg<T>>) -> Self {
-        match argm.extract(&mut self.argv) {
-            Ok(Some(r)) => *result = r,
-            Ok(None) => {},
-            Err(e) => self.errs.push(e),
-        }
-        self
+    pub fn get_val<T: YaapArg>(self, result: &mut T, argm: ArgM<ValArg<T>>) -> Self {
+        self.get_generic(result, argm)
     }
-    pub fn get_list<T: YaapArg>(self, result: &mut Vec<T>, argm: ArgM<ListArg<T>>) -> Self {
+    pub fn get_val_opt<T: YaapArg>(self, result: &mut Option<T>,
+                                   argm: ArgM<ValOptArg<T>>) -> Self {
+        self.get_generic(result, argm)
+    }
+    pub fn get_list<T: YaapArg>(self, result: &mut Vec<T>, 
+                                argm: ArgM<ListArg<T>>) -> Self {
         self.get_generic(result, argm)
     }
     pub fn finish(self) -> () {
@@ -170,7 +176,7 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
 
         // check for help flag before looking at any other args
         let mut help_flag = false;
-        let help_arg = ArgM::new("help", "Print this message").with_short('h');
+        let help_arg = ArgM::<FlagArg>::new("help", "Print this message").with_short('h');
         this = this.get_flag(&mut help_flag, help_arg);
         if help_flag {
             panic!("usage");
@@ -182,7 +188,7 @@ impl From<Yaap<YaapOpts>> for Yaap<YaapArgs> {
         // TODO think about this
         if let Some(v) = this.vers {
             let mut vers_flag = false;
-            let vers_arg = ArgM::new("version", "Print version info");
+            let vers_arg = ArgM::<FlagArg>::new("version", "Print version info");
             this = this.get_flag(&mut vers_flag, vers_arg);
             if vers_flag {
                 panic!("Version: {}", v);
