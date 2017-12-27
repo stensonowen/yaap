@@ -11,6 +11,7 @@ pub(crate) use self::arg_s::ArgS;
 pub(crate) use self::err::ArgError;
 use self::err::ArgResult;
 
+
 /// Argument matcher: contains usage data
 #[derive(Debug, Default)]
 pub struct ArgM<T: ArgType> {
@@ -81,6 +82,7 @@ impl<T: ArgType> ArgM<T> {
     }
 }
 
+
 /// Different kinds of argument matchers (e.g. flag or value)
 pub trait ArgType: Default + Sized {
     /// The return type of a match (e.g. boolean for a flag)
@@ -91,6 +93,7 @@ pub trait ArgType: Default + Sized {
     fn extract(argm: &mut ArgM<Self>, args: &mut Vec<ArgS>) -> ArgResult<Self::Contents>;
 
 }
+
 
 /// How an `ArgS` can match an `ArgM`
 #[derive(Debug, PartialEq)]
@@ -103,22 +106,22 @@ pub(crate) enum ArgMatch<'a> {
     Contains(&'a str),
 }
 
-pub trait Requirable {
-    fn require(self) -> Self;
+
+/// Defines which Arg types can be required
+// Vals, Lists, and Counts can; Flags and SubCmds cannot
+pub trait Requirable: ArgType {
+    fn set_required(&mut self);
 }
 
-use YaapArg;
-impl<T: YaapArg> Requirable for ArgM<ValArg<T>> {
-    fn require(self) -> Self {
-        self.required()
-    }
-}
-impl Requirable for ArgM<CountArg> {
-    fn require(self) -> Self {
-        //self.required()
+// implement `.required()` for any ArgM which has a kind that can be required
+impl<T: Requirable> ArgM<T> {
+    pub fn required(mut self) -> Self {
+        self.kind.set_required();
         self
     }
 }
+
+
 
 mod test {
     // misc tests / helpers
@@ -128,3 +131,4 @@ mod test {
         s.split(' ').map(|s| ArgS::from(s.to_string())).collect()
     }
 }
+

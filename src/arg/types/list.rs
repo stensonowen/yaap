@@ -5,20 +5,31 @@
 //    ? `--list 0 1 2`
 //      `--list 0 --list 1`
 //      `--list=0 --list=1
-// Invalid
 
 use YaapArg;
-use arg::{ArgS, ArgM, ArgType, ArgMatch};
+use arg::{ArgS, ArgM, ArgType, ArgMatch, Requirable};
 use arg::err::{ArgError, ArgResult};
 
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct ListArg<T: YaapArg>(PhantomData<T>);
+pub struct ListArg<T: YaapArg> {
+    kind: PhantomData<T>,
+    required: bool,
+}
 
 impl<T: YaapArg> Default for ListArg<T> {
     fn default() -> Self {
-        ListArg(PhantomData)
+        ListArg {
+            kind: PhantomData,
+            required: false,
+        }
+    }
+}
+
+impl<T: YaapArg> Requirable for ListArg<T> {
+    fn set_required(&mut self) {
+        self.required = true;
     }
 }
 

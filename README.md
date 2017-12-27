@@ -25,13 +25,52 @@ Yaap::create()
 
 The following would be compile-time errors:
 
-* Setting `is_required()` on a flag argument
-* Providing a default for anything but a value
+* Setting `required()` on a flag or subcommand argument
+* Providing a default for anything except a value
 
 The following are runtime errors:
 
 * Forgetting to call `.finish()` (which is a compile warning)
 * Nothing else
+
+## Matching 
+
+TODO table of matches
+
+## Compile-time Mistakes
+
+This framework is designed to check a lot at compile-time. 
+
+### Requiring unrequirable arguments
+
+In some cases certain arguments should be required. Though most common for Value arguments (e.g. `--val=42`), this might be desirable for other argument types as well. But it doesn't make sense for a flag to be required, as a flag argument only has two values: true (present) and false (absent).
+
+```rust
+let mut b = false;
+Yaap::create()
+    .get_flag(&mut b, ArgM::new("long", "binary flag").required())
+    .finish();
+```
+
+results in 
+
+```
+error[E0277]: the trait bound `yaap::arg::types::flag::FlagArg: yaap::arg::Requirable` is not satisfied
+```
+
+### Providing a default value
+
+Count and List argument types have values associated with omission (`0` and `vec![]` respectively), but a Value argument doesn't necessarily have a default value; instead, one can be provided.
+
+TODO: uhhh *should* other arg types have default values??
+
+### Forgetting `.finish()`
+
+The `.finish()` function is necessary to check for errors while parsing and correctness is not guaranteed without it. Omitting it causes a runtime panic as well as a compile-time warning.
+
+```
+warning: unused `yaap::Yaap` which must be used: Remember to call `.finish()`
+```
 
 ## Why tf do I need another arg parser?
 

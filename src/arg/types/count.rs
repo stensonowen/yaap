@@ -4,13 +4,19 @@
 //! Bad: `-v=2 -v`, `--verboseverbose`, `-v 3`, `--vvvverbosevv`
 
 use YaapArg;
-use arg::{ArgM, ArgS, ArgType, ArgMatch};
+use arg::{ArgM, ArgS, ArgType, ArgMatch, Requirable};
 use arg::err::{ArgError, ArgResult};
-//use arg::arg_s::ArgMatch;
 
 #[derive(Debug, Default)]
 pub struct CountArg {
     //max: Option<u8>,
+    required: bool,
+}
+
+impl Requirable for CountArg {
+    fn set_required(&mut self) {
+        self.required = true;
+    }
 }
 
 impl ArgM<CountArg> {

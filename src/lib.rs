@@ -10,7 +10,6 @@ mod impls;
 
 pub use arg::ArgM;
 pub use yaap::Yaap;
-pub use arg::Requirable;
 
 /// Trait required for an object to be derivable from arguments
 pub trait YaapArg: Debug + FromStr {
@@ -30,6 +29,10 @@ pub trait YaapArg: Debug + FromStr {
  *  Make CountArg/ListArg requirable?
  *      Can maybe not break type inference with a Requirable trait?
  *      Effect of omitting these is value- not type-level so don't really care
+ *  Arg autocompletion
+ *  Free arg numbering? With types and everything?
+ *      Can assert first free arg is T and second is U? and extract that way?
+ *  ValArg should return a T or Option<T> depending on if it's required
  *
  */
 

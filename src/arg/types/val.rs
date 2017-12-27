@@ -1,6 +1,6 @@
 
 use YaapArg;
-use arg::{ArgS, ArgM, ArgType, ArgMatch};
+use arg::{ArgS, ArgM, ArgType, ArgMatch, Requirable};
 use arg::err::{ArgError, ArgResult};
 
 #[derive(Debug)]
@@ -18,13 +18,15 @@ impl<T: YaapArg> Default for ValArg<T> {
     }
 }
 
+impl<T: YaapArg> Requirable for ValArg<T> {
+    fn set_required(&mut self) {
+        self.required = true;
+    }
+}
+
 impl<T: YaapArg> ArgM<ValArg<T>> {
     pub fn with_default(mut self, d: T) -> Self {
         self.kind.default = Some(d);
-        self
-    }
-    pub fn required(mut self) -> Self {
-        self.kind.required = true;
         self
     }
 }
